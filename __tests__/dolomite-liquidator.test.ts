@@ -1,28 +1,28 @@
 import { DateTime } from 'luxon';
-import { BigNumber } from '@dydxprotocol/solo';
-import { AccountOperation } from '@dydxprotocol/solo/dist/src/modules/operate/AccountOperation';
-import SoloLiquidator from '../src/lib/solo-liquidator';
+import { BigNumber } from '@dolomite-exchange/v2-protocol';
+import { AccountOperation } from '@dolomite-exchange/v2-protocol/dist/src/modules/operate/AccountOperation';
+import DolomiteLiquidator from '../src/lib/dolomite-liquidator';
 import AccountStore from '../src/lib/account-store';
 import MarketStore from '../src/lib/market-store';
 import LiquidationStore from '../src/lib/liquidation-store';
 import * as blockHelper from '../src/helpers/block-helper';
-import { solo } from '../src/helpers/web3';
+import { dolomite } from '../src/helpers/web3';
 
-jest.mock('@dydxprotocol/solo/dist/src/modules/operate/AccountOperation');
+jest.mock('@dolomite-exchange/dolomite-v2-protocol/dist/src/modules/operate/AccountOperation');
 jest.mock('../src/helpers/block-helper');
 
-describe('solo-liquidator', () => {
+describe('dolomite-liquidator', () => {
   let accountStore: AccountStore;
   let marketStore: MarketStore;
   let liquidationStore: LiquidationStore;
-  let soloLiquidator: SoloLiquidator;
+  let dolomiteLiquidator: DolomiteLiquidator;
 
   beforeEach(() => {
     jest.clearAllMocks();
     accountStore = new AccountStore();
     marketStore = new MarketStore();
     liquidationStore = new LiquidationStore();
-    soloLiquidator = new SoloLiquidator(accountStore, marketStore, liquidationStore);
+    dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore);
     (blockHelper.getLatestBlockTimestamp as any) = jest.fn().mockImplementation(
       async () => DateTime.utc(2020, 1, 1),
     );
@@ -30,21 +30,21 @@ describe('solo-liquidator', () => {
 
   describe('#_liquidateAccounts', () => {
     it('Successfully liquidates accounts', async () => {
-      process.env.SOLO_EXPIRATIONS_ENABLED = 'true';
+      process.env.DOLOMITE_EXPIRATIONS_ENABLED = 'true';
 
       const liquidatableAccounts = getTestLiquidatableAccounts();
       const expiredAccounts = getTestExpiredAccounts();
       const markets = getTestMarkets();
-      accountStore.getLiquidatableSoloAccounts = jest.fn().mockImplementation(
+      accountStore.getLiquidatableDolomiteAccounts = jest.fn().mockImplementation(
         () => liquidatableAccounts,
       );
       accountStore.getExpiredAccounts = jest.fn().mockImplementation(
         () => expiredAccounts,
       );
-      marketStore.getSoloMarkets = jest.fn().mockImplementation(
+      marketStore.getDolomiteMarkets = jest.fn().mockImplementation(
         () => markets,
       );
-      solo.getters.isAccountLiquidatable = jest.fn().mockImplementation(
+      dolomite.getters.isAccountLiquidatable = jest.fn().mockImplementation(
         () => true,
       );
 
@@ -60,14 +60,14 @@ describe('solo-liquidator', () => {
           return true;
         },
       }));
-      solo.liquidatorProxy.liquidate = jest.fn().mockImplementation(
+      dolomite.liquidatorProxy.liquidate = jest.fn().mockImplementation(
         (...args) => {
           liquidations.push(args);
           return { gas: 1 };
         },
       );
 
-      await soloLiquidator._liquidateAccounts();
+      await dolomiteLiquidator._liquidateAccounts();
 
       expect(liquidations.length).toBe(liquidatableAccounts.length);
       expect(commitCount).toBe(liquidateExpiredV2s.length);
@@ -80,36 +80,36 @@ describe('solo-liquidator', () => {
 
       expect(sortedLiquidations[0][0]).toBe(process.env.WALLET_ADDRESS);
       expect(sortedLiquidations[0][1].toFixed())
-        .toBe(process.env.SOLO_ACCOUNT_NUMBER);
+        .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[0][4].toFixed())
-        .toBe(process.env.SOLO_MIN_ACCOUNT_COLLATERALIZATION);
+        .toBe(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION);
       expect(sortedLiquidations[0][5].toFixed())
-        .toBe(new BigNumber(process.env.SOLO_MIN_OVERHEAD_VALUE).toFixed());
+        .toBe(new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE).toFixed());
       expect(sortedLiquidations[0][6])
-        .toEqual(process.env.SOLO_OWED_PREFERENCES.split(',')
+        .toEqual(process.env.DOLOMITE_OWED_PREFERENCES.split(',')
           .map(p => new BigNumber(p)));
       expect(sortedLiquidations[0][7])
-        .toEqual(process.env.SOLO_COLLATERAL_PREFERENCES.split(',')
+        .toEqual(process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
           .map(p => new BigNumber(p)));
 
       expect(sortedLiquidations[1][0]).toBe(process.env.WALLET_ADDRESS);
       expect(sortedLiquidations[1][1].toFixed())
-        .toBe(process.env.SOLO_ACCOUNT_NUMBER);
+        .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[1][4].toFixed())
-        .toBe(process.env.SOLO_MIN_ACCOUNT_COLLATERALIZATION);
+        .toBe(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION);
       expect(sortedLiquidations[1][5].toFixed())
-        .toBe(new BigNumber(process.env.SOLO_MIN_OVERHEAD_VALUE).toFixed());
+        .toBe(new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE).toFixed());
       expect(sortedLiquidations[1][6])
-        .toEqual(process.env.SOLO_OWED_PREFERENCES.split(',')
+        .toEqual(process.env.DOLOMITE_OWED_PREFERENCES.split(',')
           .map(p => new BigNumber(p)));
       expect(sortedLiquidations[1][7])
-        .toEqual(process.env.SOLO_COLLATERAL_PREFERENCES.split(',')
+        .toEqual(process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
           .map(p => new BigNumber(p)));
 
       expect(liquidateExpiredV2s[0][4].eq(new BigNumber(2))).toBe(true); // marketId
       expect(liquidateExpiredV2s[0][0]).toBe(process.env.WALLET_ADDRESS);
       expect(liquidateExpiredV2s[0][1])
-        .toEqual(new BigNumber(process.env.SOLO_ACCOUNT_NUMBER));
+        .toEqual(new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER));
       expect(liquidateExpiredV2s[0][3]).toEqual(new BigNumber(22)); // liquidAccountNumber
     });
   });
@@ -161,19 +161,19 @@ function getTestExpiredAccounts() {
           par: '-1010101010101010010101010010101010101001010',
           wei: '-2010101010101010010101010010101010101001010',
           expiresAt: DateTime.utc(2050, 5, 25).toISO(),
-          expiryAddress: solo.contracts.expiryV2.options.address,
+          expiryAddress: dolomite.contracts.expiryV2.options.address,
         },
         1: {
           par: '1010101010101010010101010010101010101001010',
           wei: '2010101010101010010101010010101010101001010',
           expiresAt: null,
-          expiryAddress: solo.contracts.expiryV2.options.address,
+          expiryAddress: dolomite.contracts.expiryV2.options.address,
         },
         2: {
           par: '-1010101010101010010101010010101010101001010',
           wei: '-2010101010101010010101010010101010101001010',
           expiresAt: DateTime.utc(1982, 5, 25).toISO(),
-          expiryAddress: solo.contracts.expiryV2.options.address,
+          expiryAddress: dolomite.contracts.expiryV2.options.address,
         },
         3: {
           par: '-1010101010101010010101010010101010101001010',

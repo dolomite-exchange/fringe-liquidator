@@ -1,4 +1,4 @@
-import { Web3, Solo } from '@dydxprotocol/solo';
+import { Web3, Solo as Dolomite } from '@dolomite-exchange/v2-protocol';
 import Logger from '../lib/logger';
 
 const WALLET_ADDRESS = process.env.WALLET_ADDRESS.toLowerCase();
@@ -6,7 +6,7 @@ const opts = { defaultAccount: WALLET_ADDRESS };
 
 const provider: any = new Web3.providers.HttpProvider(process.env.ETHEREUM_NODE_URL);
 
-export const solo = new Solo(
+export const dolomite = new Dolomite(
   provider,
   Number(process.env.NETWORK_ID),
   opts,
@@ -31,18 +31,18 @@ export async function loadAccounts() {
     return;
   }
 
-  const soloAccount = solo.web3.eth.accounts.wallet.add(
+  const dolomiteAccount = dolomite.web3.eth.accounts.wallet.add(
     process.env.WALLET_PRIVATE_KEY,
   );
 
-  const soloAddress = soloAccount.address.toLowerCase();
+  const dolomiteAddress = dolomiteAccount.address.toLowerCase();
 
-  if (soloAddress !== WALLET_ADDRESS) {
+  if (dolomiteAddress !== WALLET_ADDRESS) {
     Logger.error({
       at: 'web3#loadAccounts',
       message: 'Owner private key does not match address',
       expected: process.env.WALLET_ADDRESS,
-      soloAddress,
+      dolomiteAddress: dolomiteAddress,
       error: new Error('Owner private key does not match address'),
     });
   } else {
@@ -55,9 +55,9 @@ export async function loadAccounts() {
 }
 
 
-export async function initializeSoloLiquidations() {
-  const proxyAddress = solo.contracts.liquidatorProxyV1.options.address;
-  const isProxyAproved = await solo.getters.getIsLocalOperator(
+export async function initializeDolomiteLiquidations() {
+  const proxyAddress = dolomite.contracts.liquidatorProxyV1.options.address;
+  const isProxyAproved = await dolomite.getters.getIsLocalOperator(
     WALLET_ADDRESS,
     proxyAddress,
     { from: WALLET_ADDRESS },
@@ -71,7 +71,7 @@ export async function initializeSoloLiquidations() {
       proxyAddress,
     });
 
-    await solo.permissions.approveOperator(
+    await dolomite.permissions.approveOperator(
       proxyAddress,
       { from: WALLET_ADDRESS },
     );

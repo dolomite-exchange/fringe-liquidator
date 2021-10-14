@@ -1,37 +1,37 @@
-import { BigNumber } from '@dydxprotocol/solo';
-import { ConfirmationType } from '@dydxprotocol/solo/dist/src/types';
+import { BigNumber } from '@dolomite-exchange/v2-protocol';
+import { ConfirmationType } from '@dolomite-exchange/v2-protocol/dist/src/types';
 import { DateTime } from 'luxon';
-import { solo } from './web3';
+import { dolomite } from './web3';
 import { getLatestBlockTimestamp } from './block-helper';
 import { getGasPrice } from '../lib/gas-price';
 import Logger from '../lib/logger';
 
-const collateralPreferences = process.env.SOLO_COLLATERAL_PREFERENCES.split(',')
+const collateralPreferences = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
   .map(pref => pref.trim());
-const owedPreferences = process.env.SOLO_OWED_PREFERENCES.split(',')
+const owedPreferences = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
   .map(pref => pref.trim());
 
 export async function liquidateAccount(account) {
-  if (process.env.SOLO_LIQUIDATIONS_ENABLED !== 'true') {
+  if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED !== 'true') {
     return;
   }
 
   Logger.info({
-    at: 'solo-helpers#liquidateAccount',
+    at: 'dolomite-helpers#liquidateAccount',
     message: 'Starting account liquidation',
     accountOwner: account.owner,
     accountNumber: account.number,
     accountUuid: account.uuid,
   });
 
-  const liquidatable = await solo.getters.isAccountLiquidatable(
+  const liquidatable = await dolomite.getters.isAccountLiquidatable(
     account.owner,
     new BigNumber(account.number),
   );
 
   if (!liquidatable) {
     Logger.info({
-      at: 'solo-helpers#liquidateAccount',
+      at: 'dolomite-helpers#liquidateAccount',
       message: 'Account is not liquidatable',
       accountOwner: account.owner,
       accountNumber: account.number,
@@ -65,13 +65,13 @@ export async function liquidateAccount(account) {
 
   const gasPrice = getGasPrice();
 
-  await solo.liquidatorProxy.liquidate(
+  await dolomite.liquidatorProxy.liquidate(
     process.env.WALLET_ADDRESS,
-    new BigNumber(process.env.SOLO_ACCOUNT_NUMBER),
+    new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
     account.owner,
     new BigNumber(account.number),
-    new BigNumber(process.env.SOLO_MIN_ACCOUNT_COLLATERALIZATION),
-    new BigNumber(process.env.SOLO_MIN_OVERHEAD_VALUE),
+    new BigNumber(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION),
+    new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE),
     owedPreferences.map(p => new BigNumber(p)),
     collateralPreferences.map(p => new BigNumber(p)),
     {
@@ -83,12 +83,12 @@ export async function liquidateAccount(account) {
 }
 
 export async function liquidateExpiredAccount(account, markets) {
-  if (process.env.SOLO_EXPIRATIONS_ENABLED !== 'true') {
+  if (process.env.DOLOMITE_EXPIRATIONS_ENABLED !== 'true') {
     return;
   }
 
   Logger.info({
-    at: 'solo-helpers#liquidateExpiredAccount',
+    at: 'dolomite-helpers#liquidateExpiredAccount',
     message: 'Starting account expiry liquidation',
     accountOwner: account.owner,
     accountNumber: account.number,
@@ -99,7 +99,7 @@ export async function liquidateExpiredAccount(account, markets) {
   const lastBlockTimestamp = await getLatestBlockTimestamp();
 
   const expiredMarkets: string[] = [];
-  const operation = solo.operation.initiate();
+  const operation = dolomite.operation.initiate();
 
   const weis: BigNumber[] = [];
   const prices: BigNumber[] = [];
@@ -137,19 +137,19 @@ export async function liquidateExpiredAccount(account, markets) {
     const isV2Expiry = balance.expiryAddress
       && (
         balance.expiryAddress.toLowerCase()
-        === solo.contracts.expiryV2.options.address.toLowerCase()
+        === dolomite.contracts.expiryV2.options.address.toLowerCase()
       );
     const expiryTimestamp = DateTime.fromISO(balance.expiresAt);
     const expiryTimestampBN = new BigNumber(Math.floor(expiryTimestamp.toMillis() / 1000));
     const lastBlockTimestampBN = new BigNumber(Math.floor(lastBlockTimestamp.toMillis() / 1000));
-    const delayHasPassed = expiryTimestampBN.plus(process.env.SOLO_EXPIRED_ACCOUNT_DELAY_SECONDS)
+    const delayHasPassed = expiryTimestampBN.plus(process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS)
       .lte(lastBlockTimestampBN);
 
     if (isV2Expiry && delayHasPassed) {
       expiredMarkets.push(marketId);
       operation.fullyLiquidateExpiredAccountV2(
         process.env.WALLET_ADDRESS,
-        new BigNumber(process.env.SOLO_ACCOUNT_NUMBER),
+        new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
         account.owner,
         new BigNumber(account.number),
         new BigNumber(marketId),
@@ -174,7 +174,7 @@ async function commitLiquidation(account, operation, sender) {
   const gasPrice = getGasPrice();
 
   Logger.info({
-    at: 'solo-helpers#commitLiquidation',
+    at: 'dolomite-helpers#commitLiquidation',
     message: 'Sending account liquidation transaction',
     accountOwner: account.owner,
     accountNumber: account.number,
@@ -191,7 +191,7 @@ async function commitLiquidation(account, operation, sender) {
 
   if (!response) {
     Logger.info({
-      at: 'solo-helpers#commitLiquidation',
+      at: 'dolomite-helpers#commitLiquidation',
       message: 'Liquidation transaction has already been received',
       accountOwner: account.owner,
       accountNumber: account.number,
@@ -202,7 +202,7 @@ async function commitLiquidation(account, operation, sender) {
   }
 
   Logger.info({
-    at: 'solo-helpers#commitLiquidation',
+    at: 'dolomite-helpers#commitLiquidation',
     message: 'Successfully submitted liquidation transaction',
     accountOwner: account.owner,
     accountNumber: account.number,

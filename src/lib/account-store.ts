@@ -1,23 +1,23 @@
-import { ApiAccount } from '@dydxprotocol/solo';
+import { ApiAccount } from '@dolomite-exchange/v2-protocol';
 import {
-  getLiquidatableSoloAccounts,
+  getLiquidatableDolomiteAccounts,
   getExpiredAccounts,
-} from '../clients/dydx';
+} from '../clients/dolomite';
 import { delay } from './delay';
 import Logger from './logger';
 
 
 export default class AccountStore {
-  public liquidatableSoloAccounts: ApiAccount[];
+  public liquidatableDolomiteAccounts: ApiAccount[];
   public expiredAccounts: ApiAccount[];
 
   constructor() {
-    this.liquidatableSoloAccounts = [];
+    this.liquidatableDolomiteAccounts = [];
     this.expiredAccounts = [];
   }
 
-  public getLiquidatableSoloAccounts(): ApiAccount[] {
-    return this.liquidatableSoloAccounts;
+  public getLiquidatableDolomiteAccounts(): ApiAccount[] {
+    return this.liquidatableDolomiteAccounts;
   }
 
   public getExpiredAccounts(): ApiAccount[] {
@@ -55,19 +55,19 @@ export default class AccountStore {
     });
 
     const [
-      { accounts: nextLiquidatableSoloAccounts },
+      { accounts: nextLiquidatableDolomiteAccounts },
       { accounts: nextExpiredAccounts },
     ] = await Promise.all([
-      getLiquidatableSoloAccounts(),
+      getLiquidatableDolomiteAccounts(),
       getExpiredAccounts(),
     ]);
 
     // Do not put an account in both liquidatable and expired
     const filteredNextExpiredAccounts = nextExpiredAccounts.filter(
-      ea => !nextLiquidatableSoloAccounts.find(la => la.uuid === ea.uuid),
+      ea => !nextLiquidatableDolomiteAccounts.find(la => la.uuid === ea.uuid),
     );
 
-    this.liquidatableSoloAccounts = nextLiquidatableSoloAccounts;
+    this.liquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts;
     this.expiredAccounts = filteredNextExpiredAccounts;
 
     Logger.info({

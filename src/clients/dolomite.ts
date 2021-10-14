@@ -1,11 +1,11 @@
 import {
   ApiAccount,
   ApiMarket,
-} from '@dydxprotocol/solo';
+} from '@dolomite-exchange/v2-protocol';
 import request from 'request-promise-native';
 
-export async function getLiquidatableSoloAccounts(
-): Promise<{ accounts: ApiAccount[] }> {
+// TODO fix this file
+export async function getLiquidatableDolomiteAccounts(): Promise<{ accounts: ApiAccount[] }> {
   const { accounts } = await request({
     method: 'GET',
     uri: `${process.env.DYDX_URL}/v1/accounts`,
@@ -18,8 +18,7 @@ export async function getLiquidatableSoloAccounts(
   return { accounts };
 }
 
-export async function getExpiredAccounts(
-): Promise<{ accounts: ApiAccount[] }> {
+export async function getExpiredAccounts(): Promise<{ accounts: ApiAccount[] }> {
   const { accounts } = await request({
     method: 'GET',
     uri: `${process.env.DYDX_URL}/v1/accounts`,
@@ -32,8 +31,7 @@ export async function getExpiredAccounts(
   return { accounts };
 }
 
-export async function getSoloMarkets(
-): Promise<{ markets: ApiMarket[] }> {
+export async function getDolomiteMarkets(): Promise<{ markets: ApiMarket[] }> {
   const { markets } = await request({
     method: 'GET',
     uri: `${process.env.DYDX_URL}/v1/markets`,

@@ -1,11 +1,11 @@
-import { liquidateAccount, liquidateExpiredAccount } from '../helpers/solo-helpers';
+import { liquidateAccount, liquidateExpiredAccount } from '../helpers/dolomite-helpers';
 import Logger from './logger';
 import { delay } from './delay';
 import AccountStore from './account-store';
 import LiquidationStore from './liquidation-store';
 import MarketStore from './market-store';
 
-export default class SoloLiquidator {
+export default class DolomiteLiquidator {
 
   public accountStore: AccountStore;
   public marketStore: MarketStore;
@@ -23,30 +23,31 @@ export default class SoloLiquidator {
 
   start = () => {
     Logger.info({
-      at: 'SoloLiquidator#start',
-      message: 'Starting solo liquidator',
+      at: 'DolomiteLiquidator#start',
+      message: 'Starting Dolomite liquidator',
     });
     this._poll();
   }
 
   _poll = async () => {
+    // noinspection InfiniteLoopJS
     for (;;) {
       await this._liquidateAccounts();
 
-      await delay(Number(process.env.SOLO_LIQUIDATE_POLL_INTERVAL_MS));
+      await delay(Number(process.env.DOLOMITE_LIQUIDATE_POLL_INTERVAL_MS));
     }
   }
 
   _liquidateAccounts = async () => {
-    const liquidatableAccounts = this.accountStore.getLiquidatableSoloAccounts()
+    const liquidatableAccounts = this.accountStore.getLiquidatableDolomiteAccounts()
       .filter(a => !this.liquidationStore.contains(a));
     const expiredAccounts = this.accountStore.getExpiredAccounts()
       .filter(a => !this.liquidationStore.contains(a));
-    const markets = this.marketStore.getSoloMarkets();
+    const markets = this.marketStore.getDolomiteMarkets();
 
     if (liquidatableAccounts.length === 0 && expiredAccounts.length === 0) {
       Logger.info({
-        at: 'SoloLiquidator#_liquidateAccounts',
+        at: 'DolomiteLiquidator#_liquidateAccounts',
         message: 'No accounts to liquidate',
       });
       return;
@@ -61,7 +62,7 @@ export default class SoloLiquidator {
           await liquidateAccount(account);
         } catch (error) {
           Logger.error({
-            at: 'SoloLiquidator#_liquidateAccounts',
+            at: 'DolomiteLiquidator#_liquidateAccounts',
             message: `Failed to liquidate account: ${error.message}`,
             account,
             error,
@@ -73,7 +74,7 @@ export default class SoloLiquidator {
           await liquidateExpiredAccount(account, markets);
         } catch (error) {
           Logger.error({
-            at: 'SoloLiquidator#_liquidateAccounts',
+            at: 'DolomiteLiquidator#_liquidateAccounts',
             message: `Failed to liquidate expired account: ${error.message}`,
             account,
             error,

@@ -1,7 +1,7 @@
 {
   "name": "liquidator",
   "version": "3.0.0",
-  "description": "Microservice to bid on dYdX closing auctions",
+  "description": "Microservice to bid on Dolomite liquidation auctions",
   "main": "build/src/index.js",
   "scripts": {
     "test": "NODE_ENV=test jest --runInBand",
@@ -15,16 +15,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dydxprotocol/liquidator.git"
+    "url": "git+https://github.com/dolomite-exchange/liquidator.git"
   },
-  "author": "dYdX Trading Inc.",
+  "author": "Dolomite",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/dydxprotocol/liquidator/issues"
+    "url": "https://github.com/dolomite-exchange/liquidator/issues"
   },
-  "homepage": "https://github.com/dydxprotocol/liquidator#readme",
+  "homepage": "https://github.com/dolomite-exchange/liquidator#readme",
   "dependencies": {
-    "@dydxprotocol/solo": "^0.38.2",
+    "@dolomite-exchange/v2-protocol": "^1.0.8",
     "dotenv-flow": "^0.4.0",
     "lodash": "^4.17.15",
     "lru-cache": "^5.1.1",

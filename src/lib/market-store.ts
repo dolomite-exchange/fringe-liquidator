@@ -1,17 +1,17 @@
-import { ApiMarket } from '@dydxprotocol/solo';
-import { getSoloMarkets } from '../clients/dydx';
+import { ApiMarket } from '@dolomite-exchange/v2-protocol';
+import { getDolomiteMarkets } from '../clients/dolomite';
 import { delay } from './delay';
 import Logger from './logger';
 
 export default class MarketStore {
-  public soloMarkets: ApiMarket[];
+  public dolomiteMarkets: ApiMarket[];
 
   constructor() {
-    this.soloMarkets = [];
+    this.dolomiteMarkets = [];
   }
 
-  public getSoloMarkets(): ApiMarket[] {
-    return this.soloMarkets;
+  public getDolomiteMarkets(): ApiMarket[] {
+    return this.dolomiteMarkets;
   }
 
   start = () => {
@@ -44,9 +44,9 @@ export default class MarketStore {
       message: 'Updating markets...',
     });
 
-    const { markets: nextSoloMarkets } = await getSoloMarkets();
+    const { markets: nextDolomiteMarkets } = await getDolomiteMarkets();
 
-    this.soloMarkets = nextSoloMarkets;
+    this.dolomiteMarkets = nextDolomiteMarkets;
 
     Logger.info({
       at: 'MarketStore#_update',
