@@ -7,8 +7,9 @@ import MarketStore from '../src/lib/market-store';
 import LiquidationStore from '../src/lib/liquidation-store';
 import * as blockHelper from '../src/helpers/block-helper';
 import { dolomite } from '../src/helpers/web3';
+import Logger from '../src/lib/logger';
 
-jest.mock('@dolomite-exchange/dolomite-v2-protocol/dist/src/modules/operate/AccountOperation');
+jest.mock('@dolomite-exchange/v2-protocol/dist/src/modules/operate/AccountOperation');
 jest.mock('../src/helpers/block-helper');
 
 describe('dolomite-liquidator', () => {
@@ -53,6 +54,7 @@ describe('dolomite-liquidator', () => {
       const liquidateExpiredV2s: any[] = [];
       (AccountOperation as any).mockImplementation(() => ({
         fullyLiquidateExpiredAccountV2: (...args) => {
+          Logger.info('fullyLiquidateExpiredAccountV2');
           liquidateExpiredV2s.push(args);
         },
         commit: () => {
@@ -73,8 +75,8 @@ describe('dolomite-liquidator', () => {
       expect(commitCount).toBe(liquidateExpiredV2s.length);
       expect(liquidateExpiredV2s.length).toBe(1);
 
-      const sortedLiquidations = liquidatableAccounts.map(account => liquidations.find(
-        l => l[2] === account.owner
+      const sortedLiquidations = liquidatableAccounts.map((account) => liquidations.find(
+        (l) => l[2] === account.owner
         && l[3].toNumber() === account.number,
       ));
 
@@ -87,10 +89,10 @@ describe('dolomite-liquidator', () => {
         .toBe(new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE).toFixed());
       expect(sortedLiquidations[0][6])
         .toEqual(process.env.DOLOMITE_OWED_PREFERENCES.split(',')
-          .map(p => new BigNumber(p)));
+          .map((p) => new BigNumber(p)));
       expect(sortedLiquidations[0][7])
         .toEqual(process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
-          .map(p => new BigNumber(p)));
+          .map((p) => new BigNumber(p)));
 
       expect(sortedLiquidations[1][0]).toBe(process.env.WALLET_ADDRESS);
       expect(sortedLiquidations[1][1].toFixed())
@@ -101,10 +103,10 @@ describe('dolomite-liquidator', () => {
         .toBe(new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE).toFixed());
       expect(sortedLiquidations[1][6])
         .toEqual(process.env.DOLOMITE_OWED_PREFERENCES.split(',')
-          .map(p => new BigNumber(p)));
+          .map((p) => new BigNumber(p)));
       expect(sortedLiquidations[1][7])
         .toEqual(process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
-          .map(p => new BigNumber(p)));
+          .map((p) => new BigNumber(p)));
 
       expect(liquidateExpiredV2s[0][4].eq(new BigNumber(2))).toBe(true); // marketId
       expect(liquidateExpiredV2s[0][0]).toBe(process.env.WALLET_ADDRESS);

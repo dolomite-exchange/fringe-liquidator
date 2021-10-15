@@ -6,9 +6,9 @@ import {
 import { delay } from './delay';
 import Logger from './logger';
 
-
 export default class AccountStore {
   public liquidatableDolomiteAccounts: ApiAccount[];
+
   public expiredAccounts: ApiAccount[];
 
   constructor() {
@@ -30,7 +30,7 @@ export default class AccountStore {
       message: 'Starting account store',
     });
     this._poll();
-  }
+  };
 
   _poll = async () => {
     for (;;) {
@@ -46,7 +46,7 @@ export default class AccountStore {
 
       await delay(Number(process.env.ACCOUNT_POLL_INTERVAL_MS));
     }
-  }
+  };
 
   _update = async () => {
     Logger.info({
@@ -64,7 +64,7 @@ export default class AccountStore {
 
     // Do not put an account in both liquidatable and expired
     const filteredNextExpiredAccounts = nextExpiredAccounts.filter(
-      ea => !nextLiquidatableDolomiteAccounts.find(la => la.uuid === ea.uuid),
+      (ea) => !nextLiquidatableDolomiteAccounts.find((la) => la.uuid === ea.uuid),
     );
 
     this.liquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts;
@@ -74,5 +74,5 @@ export default class AccountStore {
       at: 'AccountStore#_update',
       message: 'Finished updating accounts',
     });
-  }
+  };
 }

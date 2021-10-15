@@ -7,9 +7,9 @@ import { getGasPrice } from '../lib/gas-price';
 import Logger from '../lib/logger';
 
 const collateralPreferences = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
-  .map(pref => pref.trim());
+  .map((pref) => pref.trim());
 const owedPreferences = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
-  .map(pref => pref.trim());
+  .map((pref) => pref.trim());
 
 export async function liquidateAccount(account) {
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED !== 'true') {
@@ -72,8 +72,8 @@ export async function liquidateAccount(account) {
     new BigNumber(account.number),
     new BigNumber(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION),
     new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE),
-    owedPreferences.map(p => new BigNumber(p)),
-    collateralPreferences.map(p => new BigNumber(p)),
+    owedPreferences.map((p) => new BigNumber(p)),
+    collateralPreferences.map((p) => new BigNumber(p)),
     {
       gasPrice,
       from: sender,
@@ -104,7 +104,7 @@ export async function liquidateExpiredAccount(account, markets) {
   const weis: BigNumber[] = [];
   const prices: BigNumber[] = [];
   const spreadPremiums: BigNumber[] = [];
-  const collateralPreferencesBN = collateralPreferences.map(p => new BigNumber(p));
+  const collateralPreferencesBN = collateralPreferences.map((p) => new BigNumber(p));
 
   for (let i = 0; i < collateralPreferences.length; i += 1) {
     const balance = account.balances[i];
@@ -115,7 +115,7 @@ export async function liquidateExpiredAccount(account, markets) {
       weis.push(new BigNumber(balance.wei));
     }
 
-    const market = markets.find(m => m.id === i);
+    const market = markets.find((m) => m.id === i);
 
     prices.push(new BigNumber(market.oraclePrice));
     spreadPremiums.push(new BigNumber(market.spreadPremium));

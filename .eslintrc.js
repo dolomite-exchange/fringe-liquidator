@@ -53,7 +53,7 @@ module.exports = {
         format: ['PascalCase'],
       },
     ],
-    'max-len': ['error', 100],
+    'max-len': ['error', 120],
   },
   // silence dumb react warning
   settings: { react: { version: '999.999.999' } },

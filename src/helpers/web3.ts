@@ -54,7 +54,6 @@ export async function loadAccounts() {
   }
 }
 
-
 export async function initializeDolomiteLiquidations() {
   const proxyAddress = dolomite.contracts.liquidatorProxyV1.options.address;
   const isProxyAproved = await dolomite.getters.getIsLocalOperator(
