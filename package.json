@@ -29,7 +29,7 @@
     "lodash": "^4.17.15",
     "lru-cache": "^5.1.1",
     "luxon": "^1.25.0",
-    "request-promise-native": "^1.0.8",
+    "node-fetch": "^3.0.0",
     "winston": "^3.2.1",
     "winston-transport": "^4.3.0"
   },

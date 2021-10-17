@@ -1,11 +1,11 @@
 FROM dydxprotocol/node:10.16.3-alpine
 
-RUN adduser -S dydx
-RUN mkdir -p /home/dydx/app
-RUN chown dydx -R /home/dydx/app
-USER dydx
+RUN adduser -S dolomite
+RUN mkdir -p /home/dolomite/app
+RUN chown dolomite -R /home/dolomite/app
+USER dolomite
 
-WORKDIR /home/dydx/app
+WORKDIR /home/dolomite/app
 
 COPY ./.env* ./
 COPY ./package.json ./package-lock.json ./

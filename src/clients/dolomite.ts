@@ -2,33 +2,59 @@ import {
   ApiAccount,
   ApiMarket,
 } from '@dolomite-exchange/v2-protocol';
-import request from 'request-promise-native';
+import fetch from 'node-fetch';
 
 // TODO fix this file
 export async function getLiquidatableDolomiteAccounts(): Promise<{ accounts: ApiAccount[] }> {
-  const { accounts } = await request({
-    method: 'GET',
-    uri: `${process.env.DYDX_URL}/v1/accounts`,
-    json: true,
-    qs: {
-      isLiquidatable: true,
-    },
-  });
+  const response: any = await fetch(`${process.env.SUBGRAPH_URL}`, {
+    method: 'POST',
+    body: JSON.stringify({
+      query: `{
+                marginAccounts(where: { hasBorrowedValue: true }) {
+                  user {
+                    id
+                  }
+                  accountNumber
+                  tokenValues {
+                    marketId
+                    valuePar
+                  }
+                }
+              }`,
+      variables: null
+    }),
+    headers: {
+      'content-type': 'application/json'
+    }
+  }).then(response => response.json());
 
-  return { accounts };
+  return { accounts: response['data']['marginAccounts'] };
 }
 
 export async function getExpiredAccounts(): Promise<{ accounts: ApiAccount[] }> {
-  const { accounts } = await request({
-    method: 'GET',
-    uri: `${process.env.DYDX_URL}/v1/accounts`,
-    json: true,
-    qs: {
-      isExpired: true,
-    },
-  });
+  const response: any = await fetch(`${process.env.SUBGRAPH_URL}`, {
+    method: 'POST',
+    body: JSON.stringify({
+      query: `{
+                marginAccounts(where: { hasBorrowedValue: true, hasExpiration: true }) {
+                  user {
+                    id
+                  }
+                  accountNumber
+                  tokenValues {
+                    marketId
+                    valuePar
+                  }
+                }
+              }`,
+      variables: null
+    }),
+    headers: {
+      'content-type': 'application/json'
+    }
+  }).then(response => response.json());
 
-  return { accounts };
+  return { accounts: response['data']['marginAccounts'] };
 }
 
 export async function getDolomiteMarkets(): Promise<{ markets: ApiMarket[] }> {
