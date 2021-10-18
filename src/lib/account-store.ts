@@ -1,4 +1,4 @@
-import { ApiAccount } from '@dolomite-exchange/v2-protocol';
+import { ApiAccount } from './api-types';
 import {
   getLiquidatableDolomiteAccounts,
   getExpiredAccounts,
@@ -64,7 +64,7 @@ export default class AccountStore {
 
     // Do not put an account in both liquidatable and expired
     const filteredNextExpiredAccounts = nextExpiredAccounts.filter(
-      (ea) => !nextLiquidatableDolomiteAccounts.find((la) => la.uuid === ea.uuid),
+      (ea) => !nextLiquidatableDolomiteAccounts.find((la) => la.id === ea.id),
     );
 
     this.liquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts;

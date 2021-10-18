@@ -33,6 +33,11 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 0,
     '@typescript-eslint/explicit-module-boundary-types': 0,
     '@typescript-eslint/no-use-before-define': 0,
+    '@typescript-eslint/semi': 0,
+    '@typescript-eslint/lines-between-class-members': 0,
+    'arrow-parens': 0,
+    'no-else-return': 0,
+    'no-param-reassign': 0,
     '@typescript-eslint/naming-convention': ['error',
       {
         selector: 'variableLike',

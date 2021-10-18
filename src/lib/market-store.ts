@@ -1,4 +1,4 @@
-import { ApiMarket } from '@dolomite-exchange/v2-protocol';
+import { ApiMarket } from './api-types';
 import { getDolomiteMarkets } from '../clients/dolomite';
 import { delay } from './delay';
 import Logger from './logger';
@@ -20,7 +20,7 @@ export default class MarketStore {
       message: 'Starting market store',
     });
     this._poll();
-  }
+  };
 
   _poll = async () => {
     for (;;) {
@@ -36,7 +36,7 @@ export default class MarketStore {
 
       await delay(Number(process.env.MARKET_POLL_INTERVAL_MS));
     }
-  }
+  };
 
   _update = async () => {
     Logger.info({
@@ -52,5 +52,5 @@ export default class MarketStore {
       at: 'MarketStore#_update',
       message: 'Finished updating markets',
     });
-  }
+  };
 }

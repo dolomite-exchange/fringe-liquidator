@@ -6,7 +6,6 @@ import LiquidationStore from './liquidation-store';
 import MarketStore from './market-store';
 
 export default class DolomiteLiquidator {
-
   public accountStore: AccountStore;
   public marketStore: MarketStore;
   public liquidationStore: LiquidationStore;

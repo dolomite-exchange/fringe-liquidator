@@ -5,6 +5,7 @@ import { dolomite } from './web3';
 import { getLatestBlockTimestamp } from './block-helper';
 import { getGasPrice } from '../lib/gas-price';
 import Logger from '../lib/logger';
+import { ApiAccount, ApiMarket } from '../lib/api-types';
 
 const collateralPreferences = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
   .map((pref) => pref.trim());
@@ -21,7 +22,6 @@ export async function liquidateAccount(account) {
     message: 'Starting account liquidation',
     accountOwner: account.owner,
     accountNumber: account.number,
-    accountUuid: account.uuid,
   });
 
   const liquidatable = await dolomite.getters.isAccountLiquidatable(
@@ -35,7 +35,6 @@ export async function liquidateAccount(account) {
       message: 'Account is not liquidatable',
       accountOwner: account.owner,
       accountNumber: account.number,
-      accountUuid: account.uuid,
     });
 
     return;
@@ -82,9 +81,9 @@ export async function liquidateAccount(account) {
   );
 }
 
-export async function liquidateExpiredAccount(account, markets) {
+export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiMarket[]): Promise<boolean> {
   if (process.env.DOLOMITE_EXPIRATIONS_ENABLED !== 'true') {
-    return;
+    return false;
   }
 
   Logger.info({
@@ -92,7 +91,6 @@ export async function liquidateExpiredAccount(account, markets) {
     message: 'Starting account expiry liquidation',
     accountOwner: account.owner,
     accountNumber: account.number,
-    accountUuid: account.uuid,
   });
 
   const sender = process.env.WALLET_ADDRESS;
@@ -103,7 +101,7 @@ export async function liquidateExpiredAccount(account, markets) {
 
   const weis: BigNumber[] = [];
   const prices: BigNumber[] = [];
-  const spreadPremiums: BigNumber[] = [];
+  const liquidationRewardPremiums: BigNumber[] = [];
   const collateralPreferencesBN = collateralPreferences.map((p) => new BigNumber(p));
 
   for (let i = 0; i < collateralPreferences.length; i += 1) {
@@ -115,10 +113,13 @@ export async function liquidateExpiredAccount(account, markets) {
       weis.push(new BigNumber(balance.wei));
     }
 
-    const market = markets.find((m) => m.id === i);
+    const market = markets.find(m => m.id === i);
+    if (!market) {
+      throw new Error(`Could not find market with ID ${i}`)
+    }
 
     prices.push(new BigNumber(market.oraclePrice));
-    spreadPremiums.push(new BigNumber(market.spreadPremium));
+    liquidationRewardPremiums.push(new BigNumber(market.liquidationRewardPremium));
   }
 
   Object.keys(account.balances).forEach((marketId) => {
@@ -157,7 +158,7 @@ export async function liquidateExpiredAccount(account, markets) {
         lastBlockTimestampBN,
         weis,
         prices,
-        spreadPremiums,
+        liquidationRewardPremiums,
         collateralPreferencesBN,
       );
     }
@@ -170,7 +171,7 @@ export async function liquidateExpiredAccount(account, markets) {
   return commitLiquidation(account, operation, sender);
 }
 
-async function commitLiquidation(account, operation, sender) {
+async function commitLiquidation(account, operation, sender): Promise<boolean> {
   const gasPrice = getGasPrice();
 
   Logger.info({
@@ -178,7 +179,6 @@ async function commitLiquidation(account, operation, sender) {
     message: 'Sending account liquidation transaction',
     accountOwner: account.owner,
     accountNumber: account.number,
-    accountUuid: account.uuid,
     gasPrice,
     from: sender,
   });
@@ -195,7 +195,6 @@ async function commitLiquidation(account, operation, sender) {
       message: 'Liquidation transaction has already been received',
       accountOwner: account.owner,
       accountNumber: account.number,
-      accountUuid: account.uuid,
     });
 
     return false;
@@ -206,9 +205,8 @@ async function commitLiquidation(account, operation, sender) {
     message: 'Successfully submitted liquidation transaction',
     accountOwner: account.owner,
     accountNumber: account.number,
-    accountUuid: account.uuid,
     response,
   });
 
-  return response;
+  return !!response;
 }

@@ -26,8 +26,6 @@ export default class LiquidationStore {
   }
 
   _getKey(account) {
-    return account.uuid
-      ? `${account.owner.toLowerCase()}-${account.number}`
-      : `${account.owner.toLowerCase()}-${account.market}`;
+    return `${account.owner.toLowerCase()}-${account.number}`;
   }
 }

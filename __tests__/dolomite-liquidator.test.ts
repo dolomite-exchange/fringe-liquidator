@@ -120,7 +120,6 @@ describe('dolomite-liquidator', () => {
 function getTestLiquidatableAccounts() {
   return [
     {
-      uuid: 'abc',
       owner: '0x78F4529554137A9015dC653758aB600aBC2ffD48',
       number: 0,
       balances: {
@@ -135,7 +134,6 @@ function getTestLiquidatableAccounts() {
       },
     },
     {
-      uuid: 'def',
       owner: '0x78F4529554137A9015dC653758aB600aBC2ffD48',
       number: 1,
       balances: {
@@ -155,7 +153,6 @@ function getTestLiquidatableAccounts() {
 function getTestExpiredAccounts() {
   return [
     {
-      uuid: '222',
       owner: '0x78F4529554137A9015dC653758aB600aBC2ffD48',
       number: '22',
       balances: {

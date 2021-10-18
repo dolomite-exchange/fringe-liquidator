@@ -60,10 +60,15 @@ async function getGasPrices() {
     message: 'Fetching gas prices',
   });
 
-  const response = await request({
-    method: 'GET',
-    uri: process.env.GAS_STATION_URL,
-    timeout: process.env.GAS_REQUEST_TIMEOUT_MS,
-  });
-  return JSON.parse(response);
+  const networkId = Number(process.env.NETWORK_ID)
+  if (networkId === 80001) {
+    return { fast: 10e9 };
+  } else {
+    const response = await request({
+      method: 'GET',
+      uri: process.env.GAS_STATION_URL,
+      timeout: process.env.GAS_REQUEST_TIMEOUT_MS,
+    });
+    return JSON.parse(response);
+  }
 }
