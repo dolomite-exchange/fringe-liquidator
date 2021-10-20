@@ -20,8 +20,8 @@ describe('dolomite-liquidator', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    accountStore = new AccountStore();
     marketStore = new MarketStore();
+    accountStore = new AccountStore(marketStore);
     liquidationStore = new LiquidationStore();
     dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore);
     (blockHelper.getLatestBlockTimestamp as any) = jest.fn().mockImplementation(

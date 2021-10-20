@@ -23,6 +23,7 @@ export default class MarketStore {
   };
 
   _poll = async () => {
+    // noinspection InfiniteLoopJS
     for (;;) {
       try {
         await this._update();

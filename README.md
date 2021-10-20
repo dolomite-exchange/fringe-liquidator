@@ -92,23 +92,24 @@ Liquidator Account:
 
 ### Environment Variables
 
-|ENV Variable|Description|
-|-|-|
-|WALLET_ADDRESS|**REQUIRED** Ethereum address of the Dolomite account owner that will do the liquidations
-|WALLET_PRIVATE_KEY|**REQUIRED** Ethereum private key the Dolomite account owner that will do the liquidations. Make sure that "0x" is at the start of it (MetaMask exports private keys without it).|
-|NETWORK_ID|Ethereum Network ID|
-|ETHEREUM_NODE_URL|**REQUIRED** The URL of the Ethereum node to use (e.g. an [Alchemy](https://alchemy.com/?r=99314874-10ab-44f3-9070-9abd86f4388d) or [Infura](https://infura.io/) endpoint)|
-|LIQUIDATION_KEY_EXPIRATION_SEC|Amount of time in seconds to wait before trying to liquidate the same account again|300|
-|GAS_STATION_URL|URL of the gas station API to use|
-|GAS_PRICE_MULTIPLIER|How much to multiply the `fast` gas price by when sending transactions|
-|GAS_PRICE_UPDATE_FREQUENCY_SEC|How frequently to update the gas price|
-|DOLOMITE_LIQUIDATIONS_ENABLED|true or false - whether to liquidate Dolomite accounts (true by default)|
-|DOLOMITE_EXPIRATIONS_ENABLED|true or false - whether to liquidate expired accounts (false by default)|
-|DOLOMITE_COLLATERAL_PREFERENCES|List of preferences for which collateral markets to receive first when liquidating|
-|DOLOMITE_OWED_PREFERENCES|List of preferences for which markets to liquidate first on an account when liquidating|
-|DOLOMITE_ACCOUNT_NUMBER|The Dolomite account number to use for the liquidating account. If you're not sure what this is, use 0. This will show up on [app.dolomite.io](https://app.dolomite.io) if you connect with the same wallet.|
-|DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION|The desired minimum collateralization of the liquidator account after completing a liquidation. Prevents the liquidator account from being at risk of being liquidated itself if the price of assets continues to move in some direction. Higher values are safer. e.g. 0.5 = 150% collateralization|
-|DOLOMITE_MIN_OVERHEAD_VALUE|If you can liquidate less than this amount of value before hitting `DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION`, then don't liquidate. (1 USD = 1e36)|
-|DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS|How long to wait before liquidating expired accounts. The spread for liquidating expired accounts ramps up linearly from 0% to 5% over 1 hour.|
-|ACCOUNT_POLL_INTERVAL_MS|How frequently to poll for liquidatable accounts|
-|MARKET_POLL_INTERVAL_MS|How frequently to poll for market updates|
+|   ENV Variable                                |   Description                                                     |
+|-----------------------------------------------|-------------------------------------------------------------------|
+|   WALLET_ADDRESS                              |   **REQUIRED** Ethereum address of the Dolomite account owner that will do the liquidations
+|   WALLET_PRIVATE_KEY                          |   **REQUIRED** Ethereum private key the Dolomite account owner that will do the liquidations. Make sure that "0x" is at the start of it (MetaMask exports private keys without it).
+|   NETWORK_ID                                  |   Ethereum Network ID
+|   ETHEREUM_NODE_URL                           |   **REQUIRED** The URL of the Ethereum node to use (e.g. an [Alchemy](https://alchemy.com/?r=99314874-10ab-44f3-9070-9abd86f4388d) or [Infura](https://infura.io/) endpoint)
+|   LIQUIDATION_KEY_EXPIRATION_SEC              |   Amount of time in seconds to wait before trying to liquidate the same account again
+|   GAS_STATION_URL                             |   URL of the gas station API to use
+|   GAS_PRICE_MULTIPLIER                        |   How much to multiply the `fast` gas price by when sending transactions
+|   GAS_PRICE_UPDATE_FREQUENCY_SEC              |   How frequently to update the gas price
+|   BASE_CURRENCY_ADDRESS                       |   The address of the base currency used as the bridge for selling collateral. On most Ethereum-based networks, this will be the WETH address 
+|   DOLOMITE_LIQUIDATIONS_ENABLED               |   true or false - whether to liquidate Dolomite accounts (true by default)
+|   DOLOMITE_EXPIRATIONS_ENABLED                |   true or false - whether to liquidate expired accounts (false by default)
+|   DOLOMITE_COLLATERAL_PREFERENCES             |   List of preferences for which collateral markets to receive first when liquidating
+|   DOLOMITE_OWED_PREFERENCES                   |   List of preferences for which markets to liquidate first on an account when liquidating
+|   DOLOMITE_ACCOUNT_NUMBER                     |   The Dolomite account number to use for the liquidating account. If you're not sure what this is, use 0. This will show up on [app.dolomite.io](https://app.dolomite.io) if you connect with the same wallet.
+|   DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION      |   The desired minimum collateralization of the liquidator account after completing a liquidation. Prevents the liquidator account from being at risk of being liquidated itself if the price of assets continues to move in some direction. Higher values are safer. e.g. 0.5 = 150% collateralization
+|   DOLOMITE_MIN_OVERHEAD_VALUE                 |   If you can liquidate less than this amount of value before hitting `DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION`, then don't liquidate. (1 USD = 1e36)
+|   DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS      |   How long to wait before liquidating expired accounts. The spread for liquidating expired accounts ramps up linearly from 0% to 5% over 1 hour.
+|   ACCOUNT_POLL_INTERVAL_MS                    |   How frequently to poll for liquidatable accounts
+|   MARKET_POLL_INTERVAL_MS                     |   How frequently to poll for market updates

@@ -5,13 +5,17 @@ import {
 } from '../clients/dolomite';
 import { delay } from './delay';
 import Logger from './logger';
+import MarketStore from './market-store';
 
 export default class AccountStore {
+  public marketStore: MarketStore
+
   public liquidatableDolomiteAccounts: ApiAccount[];
 
   public expiredAccounts: ApiAccount[];
 
-  constructor() {
+  constructor(marketStore: MarketStore) {
+    this.marketStore = marketStore;
     this.liquidatableDolomiteAccounts = [];
     this.expiredAccounts = [];
   }
@@ -33,6 +37,7 @@ export default class AccountStore {
   };
 
   _poll = async () => {
+    // noinspection InfiniteLoopJS
     for (;;) {
       try {
         await this._update();
@@ -54,12 +59,15 @@ export default class AccountStore {
       message: 'Updating accounts...',
     });
 
+    const markets = this.marketStore.getDolomiteMarkets();
+    const marketIds = markets.map(market => market.id)
+
     const [
       { accounts: nextLiquidatableDolomiteAccounts },
       { accounts: nextExpiredAccounts },
     ] = await Promise.all([
-      getLiquidatableDolomiteAccounts(),
-      getExpiredAccounts(),
+      getLiquidatableDolomiteAccounts(marketIds),
+      getExpiredAccounts(marketIds),
     ]);
 
     // Do not put an account in both liquidatable and expired

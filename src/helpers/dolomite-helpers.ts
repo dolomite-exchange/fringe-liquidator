@@ -12,7 +12,7 @@ const collateralPreferences = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(
 const owedPreferences = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
   .map((pref) => pref.trim());
 
-export async function liquidateAccount(account) {
+export async function liquidateAccount(liquidAccount: ApiAccount) {
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED !== 'true') {
     return;
   }
@@ -20,21 +20,21 @@ export async function liquidateAccount(account) {
   Logger.info({
     at: 'dolomite-helpers#liquidateAccount',
     message: 'Starting account liquidation',
-    accountOwner: account.owner,
-    accountNumber: account.number,
+    accountOwner: liquidAccount.owner,
+    accountNumber: liquidAccount.number,
   });
 
   const liquidatable = await dolomite.getters.isAccountLiquidatable(
-    account.owner,
-    new BigNumber(account.number),
+    liquidAccount.owner,
+    new BigNumber(liquidAccount.number),
   );
 
   if (!liquidatable) {
     Logger.info({
       at: 'dolomite-helpers#liquidateAccount',
       message: 'Account is not liquidatable',
-      accountOwner: account.owner,
-      accountNumber: account.number,
+      accountOwner: liquidAccount.owner,
+      accountNumber: liquidAccount.number,
     });
 
     return;
@@ -44,8 +44,8 @@ export async function liquidateAccount(account) {
   const borrowMarkets: string[] = [];
   const supplyMarkets: string[] = [];
 
-  Object.keys(account.balances).forEach((marketId) => {
-    const par = new BigNumber(account.balances[marketId].par);
+  Object.keys(liquidAccount.balances).forEach((marketId) => {
+    const par = new BigNumber(liquidAccount.balances[marketId].par);
 
     if (par.lt(new BigNumber(0))) {
       borrowMarkets.push(marketId);
@@ -64,21 +64,62 @@ export async function liquidateAccount(account) {
 
   const gasPrice = getGasPrice();
 
-  await dolomite.liquidatorProxy.liquidate(
-    process.env.WALLET_ADDRESS,
-    new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
-    account.owner,
-    new BigNumber(account.number),
-    new BigNumber(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION),
-    new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE),
-    owedPreferences.map((p) => new BigNumber(p)),
-    collateralPreferences.map((p) => new BigNumber(p)),
-    {
-      gasPrice,
-      from: sender,
-      confirmationType: ConfirmationType.Hash,
-    },
-  );
+  if (process.env.AUTO_SELL_COLLATERAL) {
+    if (!process.env.BASE_CURRENCY_ADDRESS) {
+      Logger.error({
+        at: 'dolomite-helpers#liquidate',
+        message: 'BASE_CURRENCY_ADDRESS is not provided',
+        error: new Error('BASE_CURRENCY_ADDRESS is not provided'),
+      });
+      return;
+    }
+
+    const baseAddress = process.env.BASE_CURRENCY_ADDRESS.toLowerCase();
+    const revertOnFailToSellCollateral = false; // for readability
+    const owedBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).lt('0'))[0];
+    const heldBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).gt('0'))[0];
+    let tokenPath: string[];
+    if (
+      owedBalance.tokenAddress.toLowerCase() === baseAddress
+        || heldBalance.tokenAddress.toLowerCase() === baseAddress
+    ) {
+      tokenPath = [heldBalance.tokenAddress, owedBalance.tokenAddress];
+    } else {
+      tokenPath = [heldBalance.tokenAddress, baseAddress, owedBalance.tokenAddress];
+    }
+    await dolomite.liquidatorProxyWithAmm.liquidate(
+      process.env.WALLET_ADDRESS,
+      new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
+      liquidAccount.owner,
+      new BigNumber(liquidAccount.number),
+      new BigNumber(owedBalance.marketId),
+      new BigNumber(heldBalance.marketId),
+      tokenPath,
+      null,
+      revertOnFailToSellCollateral,
+      {
+        gasPrice,
+        from: sender,
+        confirmationType: ConfirmationType.Hash,
+      },
+    );
+  } else {
+    await dolomite.liquidatorProxy.liquidate(
+      process.env.WALLET_ADDRESS,
+      new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
+      liquidAccount.owner,
+      new BigNumber(liquidAccount.number),
+      new BigNumber(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION),
+      new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE),
+      owedPreferences.map((p) => new BigNumber(p)),
+      collateralPreferences.map((p) => new BigNumber(p)),
+      {
+        gasPrice,
+        from: sender,
+        confirmationType: ConfirmationType.Hash,
+      },
+    );
+  }
 }
 
 export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiMarket[]): Promise<boolean> {

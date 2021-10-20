@@ -14,6 +14,7 @@ export default class GasPriceUpdater {
   }
 
   updateGasPrices = async () => {
+    // noinspection InfiniteLoopJS
     for (;;) {
       try {
         await updateGasPrice();

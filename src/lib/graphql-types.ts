@@ -1,6 +1,8 @@
 export interface GraphqlTokenValue {
   token: {
+    id: string
     marketId: string
+    symbol: string
     decimals: string
   }
   valuePar: string

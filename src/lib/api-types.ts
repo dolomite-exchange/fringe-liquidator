@@ -1,6 +1,9 @@
 import { BigNumber } from '@dolomite-exchange/v2-protocol';
 
 export interface ApiBalance {
+  marketId: number;
+  tokenAddress: string
+  tokenSymbol: string
   par: string;
   wei: string;
   expiresAt?: string;
@@ -8,6 +11,7 @@ export interface ApiBalance {
 }
 
 export interface ApiAccount {
+  id: string;
   owner: string;
   number: string;
   balances: {

@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+/* eslint-disable no-shadow */
 import { BigNumber } from '@dolomite-exchange/v2-protocol'
 import { decimalToString } from '@dolomite-exchange/v2-protocol/dist/src/lib/Helpers';
 import { GraphqlAccount, GraphqlMarket } from '../lib/graphql-types';
@@ -6,6 +6,10 @@ import {
   ApiAccount, ApiBalance, ApiMarket, MarketIndex,
 } from '../lib/api-types';
 import { dolomite } from '../helpers/web3';
+
+// @ts-ignore
+// Needed because of the "cannot use import statement outside a module" error
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 async function getAccounts(marketIds: number[], query: string): Promise<{ accounts: ApiAccount[] }> {
   const marketIndexPromises = marketIds
@@ -46,6 +50,9 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
         const indexObject = marketIndexMap[value.token.marketId]
         const index = new BigNumber(valuePar).lt('0') ? indexObject.borrow : indexObject.supply
         memo[value.token.marketId] = {
+          marketId: Number(value.token.marketId),
+          tokenSymbol: value.token.symbol,
+          tokenAddress: value.token.id,
           par: valuePar,
           wei: new BigNumber(valuePar).multipliedBy(index).div('1000000000000000000').toFixed(0),
           expiresAt: value.expirationTimestamp,
@@ -54,6 +61,7 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
         return memo
       }, {})
       return {
+        id: `${account.user.id}-${account.accountNumber}`,
         owner: account.user.id,
         number: account.accountNumber,
         balances,
@@ -100,6 +108,7 @@ export async function getExpiredAccounts(
                   tokenValues {
                     token {
                       marketId
+                      symbol
                       decimals
                     }
                     valuePar
@@ -120,6 +129,7 @@ export async function getDolomiteMarkets(): Promise<{ markets: ApiMarket[] }> {
                   id
                   token {
                     marketId
+                    symbol
                     decimals
                   }
                   marginPremium

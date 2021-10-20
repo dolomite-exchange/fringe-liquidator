@@ -19,9 +19,13 @@ if (Number(process.env.MARKET_POLL_INTERVAL_MS) < 1000) {
   throw new Error('Account Poll Interval too low');
 }
 
+if (!process.env.BASE_CURRENCY_ADDRESS) {
+  throw new Error('BASE_CURRENCY_ADDRESS is not provided')
+}
+
 async function start() {
-  const accountStore = new AccountStore();
   const marketStore = new MarketStore();
+  const accountStore = new AccountStore(marketStore);
   const liquidationStore = new LiquidationStore();
   const dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore);
   const gasPriceUpdater = new GasPriceUpdater();
