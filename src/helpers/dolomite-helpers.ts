@@ -122,7 +122,7 @@ export async function liquidateAccount(liquidAccount: ApiAccount) {
   }
 }
 
-export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiMarket[]): Promise<boolean> {
+export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiMarket[]) {
   if (process.env.DOLOMITE_EXPIRATIONS_ENABLED !== 'true') {
     return false;
   }
@@ -135,8 +135,81 @@ export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiM
   });
 
   const sender = process.env.WALLET_ADDRESS;
-  const lastBlockTimestamp = await getLatestBlockTimestamp();
 
+  if (process.env.AUTO_SELL_COLLATERAL) {
+    return liquidateExpiredAccountAndSellCollateralInternal(account, sender)
+  } else {
+    const lastBlockTimestamp = await getLatestBlockTimestamp();
+    return liquidateExpiredAccountInternal(account, markets, sender, lastBlockTimestamp)
+  }
+}
+
+async function liquidateExpiredAccountAndSellCollateralInternal(
+  liquidAccount: ApiAccount,
+  sender: string,
+) {
+  if (!process.env.BASE_CURRENCY_ADDRESS) {
+    Logger.error({
+      at: 'dolomite-helpers#liquidateExpiredAccountAndSellCollateralInternal',
+      message: 'BASE_CURRENCY_ADDRESS is not provided',
+      error: new Error('BASE_CURRENCY_ADDRESS is not provided'),
+    });
+    return;
+  }
+
+  const gasPrice = getGasPrice();
+
+  const baseAddress = process.env.BASE_CURRENCY_ADDRESS.toLowerCase();
+  const revertOnFailToSellCollateral = false; // for readability
+  const owedBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).lt('0'))[0];
+  const heldBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).gt('0'))[0];
+
+  if (!owedBalance.expiryAddress
+    || !owedBalance.expiresAt
+    || owedBalance.expiryAddress.toLowerCase() !== dolomite.contracts.expiryV2.options.address.toLowerCase()
+  ) {
+    Logger.error({
+      at: 'dolomite-helpers#liquidateExpiredAccountAndSellCollateralInternal',
+      message: 'owedBalance does not expire or uses the wrong expiration contract address',
+      error: new Error('owedBalance does not expire or uses the wrong expiration contract address'),
+    });
+    return;
+  }
+
+  let tokenPath: string[];
+  if (
+    owedBalance.tokenAddress.toLowerCase() === baseAddress
+    || heldBalance.tokenAddress.toLowerCase() === baseAddress
+  ) {
+    tokenPath = [heldBalance.tokenAddress, owedBalance.tokenAddress];
+  } else {
+    tokenPath = [heldBalance.tokenAddress, baseAddress, owedBalance.tokenAddress];
+  }
+
+  return dolomite.liquidatorProxyWithAmm.liquidate(
+    process.env.WALLET_ADDRESS,
+    new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
+    liquidAccount.owner,
+    new BigNumber(liquidAccount.number),
+    new BigNumber(owedBalance.marketId),
+    new BigNumber(heldBalance.marketId),
+    tokenPath,
+    owedBalance.expiresAt,
+    revertOnFailToSellCollateral,
+    {
+      gasPrice,
+      from: sender,
+      confirmationType: ConfirmationType.Hash,
+    },
+  );
+}
+
+async function liquidateExpiredAccountInternal(
+  account: ApiAccount,
+  markets: ApiMarket[],
+  sender: string,
+  lastBlockTimestamp: DateTime,
+) {
   const expiredMarkets: string[] = [];
   const operation = dolomite.operation.initiate();
 

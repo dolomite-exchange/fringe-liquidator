@@ -55,7 +55,7 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
           tokenAddress: value.token.id,
           par: valuePar,
           wei: new BigNumber(valuePar).multipliedBy(index).div('1000000000000000000').toFixed(0),
-          expiresAt: value.expirationTimestamp,
+          expiresAt: value.expirationTimestamp ? new BigNumber(value.expirationTimestamp) : undefined,
           expiryAddress: value.expiryAddress,
         }
         return memo
