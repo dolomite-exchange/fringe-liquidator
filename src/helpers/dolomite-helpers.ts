@@ -1,5 +1,5 @@
 import { BigNumber } from '@dolomite-exchange/v2-protocol';
-import { ConfirmationType } from '@dolomite-exchange/v2-protocol/dist/src/types';
+import { ConfirmationType, TxResult } from '@dolomite-exchange/v2-protocol/dist/src/types';
 import { DateTime } from 'luxon';
 import { dolomite } from './web3';
 import { getLatestBlockTimestamp } from './block-helper';
@@ -147,14 +147,14 @@ export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiM
 async function liquidateExpiredAccountAndSellCollateralInternal(
   liquidAccount: ApiAccount,
   sender: string,
-) {
+): Promise<TxResult | undefined> {
   if (!process.env.BASE_CURRENCY_ADDRESS) {
     Logger.error({
       at: 'dolomite-helpers#liquidateExpiredAccountAndSellCollateralInternal',
       message: 'BASE_CURRENCY_ADDRESS is not provided',
       error: new Error('BASE_CURRENCY_ADDRESS is not provided'),
     });
-    return;
+    return Promise.resolve(undefined);
   }
 
   const gasPrice = getGasPrice();
@@ -173,7 +173,7 @@ async function liquidateExpiredAccountAndSellCollateralInternal(
       message: 'owedBalance does not expire or uses the wrong expiration contract address',
       error: new Error('owedBalance does not expire or uses the wrong expiration contract address'),
     });
-    return;
+    return Promise.resolve(undefined);
   }
 
   let tokenPath: string[];
