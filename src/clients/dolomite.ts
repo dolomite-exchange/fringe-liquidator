@@ -1,4 +1,4 @@
-/* eslint-disable no-shadow */
+/* eslint-disable no-shadow,max-len */
 import { BigNumber } from '@dolomite-exchange/v2-protocol'
 import { decimalToString } from '@dolomite-exchange/v2-protocol/dist/src/lib/Helpers';
 import { GraphqlAccount, GraphqlMarket } from '../lib/graphql-types';
@@ -12,12 +12,25 @@ import { dolomite } from '../helpers/web3';
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 async function getAccounts(marketIds: number[], query: string): Promise<{ accounts: ApiAccount[] }> {
+  // noinspection UnnecessaryLocalVariableJS
+  const blockNumber = await fetch('', {
+    method: 'POST',
+    body: JSON.stringify({
+      query: '{ _meta { block { number } } }',
+    }),
+  })
+    .then(response => response.json())
+    .then((json: any) => json.data._meta.block.number)
+    .catch(() => 'latest')
+
+  dolomite.web3.eth.defaultBlock = blockNumber
+
   const marketIndexPromises = marketIds
     .map<Promise<MarketIndex>>(async marketId => {
     const {
       borrow,
       supply,
-    } = await dolomite.contracts.soloMargin.methods.getMarketCurrentIndex(marketId).call();
+    } = await dolomite.contracts.soloMargin.methods.getMarketCurrentIndex(marketId).call(undefined);
     return {
       marketId,
       borrow: new BigNumber(borrow),
@@ -35,7 +48,9 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
     method: 'POST',
     body: JSON.stringify({
       query,
-      variables: null,
+      variables: {
+        blockNumber,
+      },
     }),
     headers: {
       'content-type': 'application/json',
@@ -74,8 +89,9 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
 export async function getLiquidatableDolomiteAccounts(
   marketIds: number[],
 ): Promise<{ accounts: ApiAccount[] }> {
-  const query = `{
-                marginAccounts(where: { hasBorrowedValue: true }) {
+  const query = `
+            query getActiveMarginAccounts($blockNumber: Int) {
+                marginAccounts(where: { hasBorrowedValue: true }, block: { number: $blockNumber }) {
                   id
                   user {
                     id
@@ -98,8 +114,9 @@ export async function getLiquidatableDolomiteAccounts(
 export async function getExpiredAccounts(
   marketIds: number[],
 ): Promise<{ accounts: ApiAccount[] }> {
-  const query = `{
-                marginAccounts(where: { hasBorrowedValue: true, hasExpiration: true }) {
+  const query = `
+            query getActiveMarginAccounts($blockNumber: Int) {
+                marginAccounts(where: { hasBorrowedValue: true, hasExpiration: true }, block: { number: $blockNumber }) {
                   id
                   user {
                     id

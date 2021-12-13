@@ -164,7 +164,8 @@ async function liquidateExpiredAccountAndSellCollateralInternal(
   const owedBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).lt('0'))[0];
   const heldBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).gt('0'))[0];
 
-  if (!owedBalance.expiryAddress
+  if (
+    !owedBalance.expiryAddress
     || !owedBalance.expiresAt
     || owedBalance.expiryAddress.toLowerCase() !== dolomite.contracts.expiryV2.options.address.toLowerCase()
   ) {
