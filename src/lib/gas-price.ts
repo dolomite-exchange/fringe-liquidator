@@ -62,7 +62,8 @@ async function getGasPrices() {
 
   const networkId = Number(process.env.NETWORK_ID)
   if (networkId === 80001) {
-    return { fast: 10e9 };
+    // mumbai testnet
+    return { fast: 10 };
   } else {
     const response = await request({
       method: 'GET',

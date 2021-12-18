@@ -27,6 +27,14 @@ export interface ApiMarket {
   liquidationRewardPremium: string
 }
 
+export interface ApiRiskParam {
+  id: number
+  tokenAddress: string
+  oraclePrice: string
+  marginPremium: string
+  liquidationRewardPremium: string
+}
+
 export interface MarketIndex {
   marketId: number
   borrow: BigNumber

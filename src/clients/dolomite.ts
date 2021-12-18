@@ -173,3 +173,40 @@ export async function getDolomiteMarkets(): Promise<{ markets: ApiMarket[] }> {
 
   return { markets: await Promise.all(markets) };
 }
+
+export async function getDolomiteRiskParams(): Promise<{ markets: ApiMarket[] }> {
+  const { data }: any = await fetch(`${process.env.SUBGRAPH_URL}`, {
+    method: 'POST',
+    body: JSON.stringify({
+      query: `{
+                marketRiskInfos {
+                  id
+                  token {
+                    marketId
+                    symbol
+                    decimals
+                  }
+                  marginPremium
+                  liquidationRewardPremium
+                }
+              }`,
+      variables: null,
+    }),
+    headers: {
+      'content-type': 'application/json',
+    },
+  }).then(response => response.json());
+
+  const markets = (data.marketRiskInfos as GraphqlMarket[]).map<Promise<ApiMarket>>(async market => {
+    const oraclePriceResult = await dolomite.contracts.soloMargin.methods.getMarketPrice(market.id).call()
+    return {
+      id: Number(market.id),
+      tokenAddress: market.token.id,
+      oraclePrice: oraclePriceResult.value,
+      marginPremium: decimalToString(market.marginPremium),
+      liquidationRewardPremium: decimalToString(market.liquidationRewardPremium),
+    }
+  })
+
+  return { markets: await Promise.all(markets) };
+}

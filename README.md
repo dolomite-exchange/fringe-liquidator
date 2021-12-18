@@ -32,6 +32,8 @@ docker run \
   -e ETHEREUM_NODE_URL=https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY \
   -e DOLOMITE_LIQUIDATIONS_ENABLED=true \
   -e DOLOMITE_EXPIRATIONS_ENABLED=false \
+  -e DOLOMITE_AUTO_SELL_COLLATERAL=true \
+  -e DOLOMITE_BRIDGE_CURRENCY_ADDRESS=<WETH_ADDRESS> \
   dolomite/liquidator
 ```
 
@@ -102,7 +104,9 @@ Liquidator Account:
 |   GAS_STATION_URL                             |   URL of the gas station API to use
 |   GAS_PRICE_MULTIPLIER                        |   How much to multiply the `fast` gas price by when sending transactions
 |   GAS_PRICE_UPDATE_FREQUENCY_SEC              |   How frequently to update the gas price
-|   BASE_CURRENCY_ADDRESS                       |   The address of the base currency used as the bridge for selling collateral. On most Ethereum-based networks, this will be the WETH address 
+|   DOLOMITE_AUTO_SELL_COLLATERAL               |   True to automatically sell collateral on Dolomite to repay debt, holding on to excess tokens as 
+|   DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL  |   True to revert the liquidation if the collateral cannot be sold to pay off the debt. If set to false and collateral cannot be liquidated to recover debt, the user will need to maintain sufficient collateralization to prevent being liquidated. 
+|   DOLOMITE_BRIDGE_CURRENCY_ADDRESS            |   The address of the bridge currency used as connecting asset to sell collateral for the debt token. On most Ethereum-based networks, this will be the WETH address. Meaning, Trades from LRC --> USDC are instead routed as such LRC --> WETH --> USDC.  
 |   DOLOMITE_LIQUIDATIONS_ENABLED               |   true or false - whether to liquidate Dolomite accounts (true by default)
 |   DOLOMITE_EXPIRATIONS_ENABLED                |   true or false - whether to liquidate expired accounts (false by default)
 |   DOLOMITE_COLLATERAL_PREFERENCES             |   List of preferences for which collateral markets to receive first when liquidating

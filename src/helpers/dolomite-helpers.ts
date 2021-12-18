@@ -64,28 +64,28 @@ export async function liquidateAccount(liquidAccount: ApiAccount) {
 
   const gasPrice = getGasPrice();
 
-  if (process.env.AUTO_SELL_COLLATERAL) {
-    if (!process.env.BASE_CURRENCY_ADDRESS) {
+  if (process.env.DOLOMITE_AUTO_SELL_COLLATERAL) {
+    if (!process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS) {
       Logger.error({
         at: 'dolomite-helpers#liquidate',
-        message: 'BASE_CURRENCY_ADDRESS is not provided',
-        error: new Error('BASE_CURRENCY_ADDRESS is not provided'),
+        message: 'DOLOMITE_BRIDGE_CURRENCY_ADDRESS is not provided',
+        error: new Error('DOLOMITE_BRIDGE_CURRENCY_ADDRESS is not provided'),
       });
       return;
     }
 
-    const baseAddress = process.env.BASE_CURRENCY_ADDRESS.toLowerCase();
-    const revertOnFailToSellCollateral = false; // for readability
+    const bridgeAddress = process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS.toLowerCase();
+    const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL;
     const owedBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).lt('0'))[0];
     const heldBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).gt('0'))[0];
     let tokenPath: string[];
     if (
-      owedBalance.tokenAddress.toLowerCase() === baseAddress
-        || heldBalance.tokenAddress.toLowerCase() === baseAddress
+      owedBalance.tokenAddress.toLowerCase() === bridgeAddress
+        || heldBalance.tokenAddress.toLowerCase() === bridgeAddress
     ) {
       tokenPath = [heldBalance.tokenAddress, owedBalance.tokenAddress];
     } else {
-      tokenPath = [heldBalance.tokenAddress, baseAddress, owedBalance.tokenAddress];
+      tokenPath = [heldBalance.tokenAddress, bridgeAddress, owedBalance.tokenAddress];
     }
     await dolomite.liquidatorProxyWithAmm.liquidate(
       process.env.WALLET_ADDRESS,
@@ -122,7 +122,7 @@ export async function liquidateAccount(liquidAccount: ApiAccount) {
   }
 }
 
-export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiMarket[]) {
+export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiMarket[], lastBlockTimestamp: DateTime) {
   if (process.env.DOLOMITE_EXPIRATIONS_ENABLED !== 'true') {
     return false;
   }
@@ -136,10 +136,9 @@ export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiM
 
   const sender = process.env.WALLET_ADDRESS;
 
-  if (process.env.AUTO_SELL_COLLATERAL) {
+  if (process.env.DOLOMITE_AUTO_SELL_COLLATERAL) {
     return liquidateExpiredAccountAndSellCollateralInternal(account, sender)
   } else {
-    const lastBlockTimestamp = await getLatestBlockTimestamp();
     return liquidateExpiredAccountInternal(account, markets, sender, lastBlockTimestamp)
   }
 }
@@ -148,19 +147,19 @@ async function liquidateExpiredAccountAndSellCollateralInternal(
   liquidAccount: ApiAccount,
   sender: string,
 ): Promise<TxResult | undefined> {
-  if (!process.env.BASE_CURRENCY_ADDRESS) {
+  if (!process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS) {
     Logger.error({
       at: 'dolomite-helpers#liquidateExpiredAccountAndSellCollateralInternal',
-      message: 'BASE_CURRENCY_ADDRESS is not provided',
-      error: new Error('BASE_CURRENCY_ADDRESS is not provided'),
+      message: 'BRIDGE_CURRENCY_ADDRESS is not provided',
+      error: new Error('BRIDGE_CURRENCY_ADDRESS is not provided'),
     });
     return Promise.resolve(undefined);
   }
 
   const gasPrice = getGasPrice();
 
-  const baseAddress = process.env.BASE_CURRENCY_ADDRESS.toLowerCase();
-  const revertOnFailToSellCollateral = false; // for readability
+  const bridgeAddress = process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS.toLowerCase();
+  const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL;
   const owedBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).lt('0'))[0];
   const heldBalance = Object.values(liquidAccount.balances).filter(value => new BigNumber(value.wei).gt('0'))[0];
 
@@ -179,12 +178,12 @@ async function liquidateExpiredAccountAndSellCollateralInternal(
 
   let tokenPath: string[];
   if (
-    owedBalance.tokenAddress.toLowerCase() === baseAddress
-    || heldBalance.tokenAddress.toLowerCase() === baseAddress
+    owedBalance.tokenAddress.toLowerCase() === bridgeAddress
+    || heldBalance.tokenAddress.toLowerCase() === bridgeAddress
   ) {
     tokenPath = [heldBalance.tokenAddress, owedBalance.tokenAddress];
   } else {
-    tokenPath = [heldBalance.tokenAddress, baseAddress, owedBalance.tokenAddress];
+    tokenPath = [heldBalance.tokenAddress, bridgeAddress, owedBalance.tokenAddress];
   }
 
   return dolomite.liquidatorProxyWithAmm.liquidate(

@@ -1,9 +1,11 @@
+import { DateTime } from 'luxon';
 import { liquidateAccount, liquidateExpiredAccount } from '../helpers/dolomite-helpers';
 import Logger from './logger';
 import { delay } from './delay';
 import AccountStore from './account-store';
 import LiquidationStore from './liquidation-store';
 import MarketStore from './market-store';
+import { getLatestBlockTimestamp } from "../helpers/block-helper";
 
 export default class DolomiteLiquidator {
   public accountStore: AccountStore;
@@ -38,11 +40,20 @@ export default class DolomiteLiquidator {
   }
 
   _liquidateAccounts = async () => {
+    const lastBlockTimestamp: DateTime = await getLatestBlockTimestamp();
+
+    const expiredAccounts = this.accountStore.getExpiredAccounts()
+      .filter(a => !this.liquidationStore.contains(a))
+      .filter(a => {
+        return Object.values(a.balances).some((balance => {
+          return balance.expiresAt && balance.expiresAt.lt(lastBlockTimestamp.toSeconds)
+        }))
+      });
+
+    const markets = this.marketStore.getDolomiteMarkets();
     const liquidatableAccounts = this.accountStore.getLiquidatableDolomiteAccounts()
       .filter(a => !this.liquidationStore.contains(a));
-    const expiredAccounts = this.accountStore.getExpiredAccounts()
-      .filter(a => !this.liquidationStore.contains(a));
-    const markets = this.marketStore.getDolomiteMarkets();
+    // TODO filter liquid positions, including market-specific risk params
 
     if (liquidatableAccounts.length === 0 && expiredAccounts.length === 0) {
       Logger.info({
@@ -70,7 +81,7 @@ export default class DolomiteLiquidator {
       }),
       ...expiredAccounts.map(async (account) => {
         try {
-          await liquidateExpiredAccount(account, markets);
+          await liquidateExpiredAccount(account, markets, lastBlockTimestamp);
         } catch (error) {
           Logger.error({
             at: 'DolomiteLiquidator#_liquidateAccounts',
