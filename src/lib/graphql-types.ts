@@ -30,3 +30,8 @@ export interface GraphqlMarket {
   marginPremium: string
   liquidationRewardPremium: string
 }
+
+export interface GraphqlRiskParams {
+  liquidationRatio: string
+  liquidationReward: string
+}

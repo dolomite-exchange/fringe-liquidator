@@ -1,11 +1,10 @@
-import { BigNumber } from '@dolomite-exchange/v2-protocol';
-import { ConfirmationType, TxResult } from '@dolomite-exchange/v2-protocol/dist/src/types';
+import { BigNumber, INTEGERS } from '@dolomite-exchange/dolomite-margin';
+import { ConfirmationType, TxResult } from '@dolomite-exchange/dolomite-margin/dist/src/types';
 import { DateTime } from 'luxon';
 import { dolomite } from './web3';
-import { getLatestBlockTimestamp } from './block-helper';
-import { getGasPrice } from '../lib/gas-price';
 import Logger from '../lib/logger';
 import { ApiAccount, ApiMarket } from '../lib/api-types';
+import { getGasPrice } from '../lib/gas-price';
 
 const collateralPreferences = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
   .map((pref) => pref.trim());
@@ -47,9 +46,9 @@ export async function liquidateAccount(liquidAccount: ApiAccount) {
   Object.keys(liquidAccount.balances).forEach((marketId) => {
     const par = new BigNumber(liquidAccount.balances[marketId].par);
 
-    if (par.lt(new BigNumber(0))) {
+    if (par.lt(INTEGERS.ZERO)) {
       borrowMarkets.push(marketId);
-    } else if (par.gt(new BigNumber(0))) {
+    } else if (par.gt(INTEGERS.ZERO)) {
       supplyMarkets.push(marketId);
     }
   });
@@ -166,7 +165,7 @@ async function liquidateExpiredAccountAndSellCollateralInternal(
   if (
     !owedBalance.expiryAddress
     || !owedBalance.expiresAt
-    || owedBalance.expiryAddress.toLowerCase() !== dolomite.contracts.expiryV2.options.address.toLowerCase()
+    || owedBalance.expiryAddress.toLowerCase() !== dolomite.contracts.expiry.options.address.toLowerCase()
   ) {
     Logger.error({
       at: 'dolomite-helpers#liquidateExpiredAccountAndSellCollateralInternal',
@@ -222,7 +221,7 @@ async function liquidateExpiredAccountInternal(
     const balance = account.balances[i];
 
     if (!balance) {
-      weis.push(new BigNumber(0));
+      weis.push(INTEGERS.ZERO);
     } else {
       weis.push(new BigNumber(balance.wei));
     }
@@ -252,7 +251,7 @@ async function liquidateExpiredAccountInternal(
     const isV2Expiry = balance.expiryAddress
       && (
         balance.expiryAddress.toLowerCase()
-        === dolomite.contracts.expiryV2.options.address.toLowerCase()
+        === dolomite.contracts.expiry.options.address.toLowerCase()
       );
     const expiryTimestamp = DateTime.fromISO(balance.expiresAt);
     const expiryTimestampBN = new BigNumber(Math.floor(expiryTimestamp.toMillis() / 1000));

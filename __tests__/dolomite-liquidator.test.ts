@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
-import { BigNumber } from '@dolomite-exchange/v2-protocol';
-import { AccountOperation } from '@dolomite-exchange/v2-protocol/dist/src/modules/operate/AccountOperation';
+import { BigNumber } from '@dolomite-exchange/dolomite-margin';
+import { AccountOperation } from '@dolomite-exchange/dolomite-margin/dist/src/modules/operate/AccountOperation';
 import DolomiteLiquidator from '../src/lib/dolomite-liquidator';
 import AccountStore from '../src/lib/account-store';
 import MarketStore from '../src/lib/market-store';
@@ -8,8 +8,9 @@ import LiquidationStore from '../src/lib/liquidation-store';
 import * as blockHelper from '../src/helpers/block-helper';
 import { dolomite } from '../src/helpers/web3';
 import Logger from '../src/lib/logger';
+import RiskParamsStore from '../src/lib/risk-params-store';
 
-jest.mock('@dolomite-exchange/v2-protocol/dist/src/modules/operate/AccountOperation');
+jest.mock('@dolomite-exchange/dolomite-margin/dist/src/modules/operate/AccountOperation');
 jest.mock('../src/helpers/block-helper');
 
 describe('dolomite-liquidator', () => {
@@ -17,13 +18,15 @@ describe('dolomite-liquidator', () => {
   let marketStore: MarketStore;
   let liquidationStore: LiquidationStore;
   let dolomiteLiquidator: DolomiteLiquidator;
+  let riskParamsStore: RiskParamsStore;
 
   beforeEach(() => {
     jest.clearAllMocks();
     marketStore = new MarketStore();
     accountStore = new AccountStore(marketStore);
     liquidationStore = new LiquidationStore();
-    dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore);
+    riskParamsStore = new RiskParamsStore();
+    dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore, riskParamsStore);
     (blockHelper.getLatestBlockTimestamp as any) = jest.fn().mockImplementation(
       async () => DateTime.utc(2020, 1, 1),
     );
@@ -160,19 +163,19 @@ function getTestExpiredAccounts() {
           par: '-1010101010101010010101010010101010101001010',
           wei: '-2010101010101010010101010010101010101001010',
           expiresAt: DateTime.utc(2050, 5, 25).toISO(),
-          expiryAddress: dolomite.contracts.expiryV2.options.address,
+          expiryAddress: dolomite.contracts.expiry.options.address,
         },
         1: {
           par: '1010101010101010010101010010101010101001010',
           wei: '2010101010101010010101010010101010101001010',
           expiresAt: null,
-          expiryAddress: dolomite.contracts.expiryV2.options.address,
+          expiryAddress: dolomite.contracts.expiry.options.address,
         },
         2: {
           par: '-1010101010101010010101010010101010101001010',
           wei: '-2010101010101010010101010010101010101001010',
           expiresAt: DateTime.utc(1982, 5, 25).toISO(),
-          expiryAddress: dolomite.contracts.expiryV2.options.address,
+          expiryAddress: dolomite.contracts.expiry.options.address,
         },
         3: {
           par: '-1010101010101010010101010010101010101001010',

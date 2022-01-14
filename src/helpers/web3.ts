@@ -1,4 +1,4 @@
-import { Web3, Solo as Dolomite } from '@dolomite-exchange/v2-protocol';
+import { Web3, DolomiteMargin } from '@dolomite-exchange/dolomite-margin';
 import Logger from '../lib/logger';
 
 const WALLET_ADDRESS = process.env.WALLET_ADDRESS.toLowerCase();
@@ -6,7 +6,7 @@ const opts = { defaultAccount: WALLET_ADDRESS };
 
 const provider: any = new Web3.providers.HttpProvider(process.env.ETHEREUM_NODE_URL);
 
-export const dolomite = new Dolomite(
+export const dolomite = new DolomiteMargin(
   provider,
   Number(process.env.NETWORK_ID),
   opts,
@@ -39,10 +39,10 @@ export async function loadAccounts() {
 
   if (dolomiteAddress !== WALLET_ADDRESS) {
     Logger.error({
+      dolomiteAddress,
       at: 'web3#loadAccounts',
       message: 'Owner private key does not match address',
       expected: process.env.WALLET_ADDRESS,
-      dolomiteAddress: dolomiteAddress,
       error: new Error('Owner private key does not match address'),
     });
   } else {

@@ -7,7 +7,8 @@ import MarketStore from './lib/market-store';
 import LiquidationStore from './lib/liquidation-store';
 import DolomiteLiquidator from './lib/dolomite-liquidator';
 import GasPriceUpdater from './lib/gas-price-updater';
-import { loadAccounts, initializeDolomiteLiquidations } from './helpers/web3';
+import { initializeDolomiteLiquidations, loadAccounts } from './helpers/web3';
+import RiskParamsStore from './lib/risk-params-store';
 
 console.log(`Starting in env ${process.env.NODE_ENV}`);
 
@@ -27,7 +28,8 @@ async function start() {
   const marketStore = new MarketStore();
   const accountStore = new AccountStore(marketStore);
   const liquidationStore = new LiquidationStore();
-  const dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore);
+  const riskParamsStore = new RiskParamsStore();
+  const dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore, riskParamsStore);
   const gasPriceUpdater = new GasPriceUpdater();
 
   await loadAccounts();
@@ -38,6 +40,7 @@ async function start() {
 
   accountStore.start();
   marketStore.start();
+  riskParamsStore.start();
   gasPriceUpdater.start();
 
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED === 'true' || process.env.DOLOMITE_EXPIRATIONS_ENABLED === 'true') {

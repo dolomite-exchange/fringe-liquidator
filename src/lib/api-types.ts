@@ -1,11 +1,11 @@
-import { BigNumber, Integer } from '@dolomite-exchange/v2-protocol';
+import { Integer } from '@dolomite-exchange/dolomite-margin';
 
 export interface ApiBalance {
   marketId: number;
   tokenAddress: string
   tokenSymbol: string
-  par: string;
-  wei: string;
+  par: Integer;
+  wei: Integer;
   expiresAt?: Integer;
   expiryAddress?: string;
 }
@@ -22,21 +22,18 @@ export interface ApiAccount {
 export interface ApiMarket {
   id: number
   tokenAddress: string
-  oraclePrice: string
-  marginPremium: string
-  liquidationRewardPremium: string
+  oraclePrice: Integer
+  marginPremium: Integer
+  liquidationRewardPremium: Integer
 }
 
 export interface ApiRiskParam {
-  id: number
-  tokenAddress: string
-  oraclePrice: string
-  marginPremium: string
-  liquidationRewardPremium: string
+  liquidationRatio: Integer;
+  liquidationReward: Integer;
 }
 
 export interface MarketIndex {
   marketId: number
-  borrow: BigNumber
-  supply: BigNumber
+  borrow: Integer
+  supply: Integer
 }

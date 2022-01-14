@@ -24,12 +24,13 @@
   },
   "homepage": "https://github.com/dolomite-exchange/liquidator#readme",
   "dependencies": {
-    "@dolomite-exchange/v2-protocol": "^1.0.10",
+    "@dolomite-exchange/dolomite-margin": "^0.1.5",
     "dotenv-flow": "^0.4.0",
     "lodash": "^4.17.15",
     "lru-cache": "^5.1.1",
     "luxon": "^1.25.0",
     "node-fetch": "^3.0.0",
+    "request-promise-native": "^1.0.9",
     "winston": "^3.2.1",
     "winston-transport": "^4.3.0"
   },
