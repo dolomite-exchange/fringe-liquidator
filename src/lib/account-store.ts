@@ -24,7 +24,7 @@ export default class AccountStore {
     return this.liquidatableDolomiteAccounts;
   }
 
-  public getExpiredAccounts(): ApiAccount[] {
+  public getExpirableDolomiteAccounts(): ApiAccount[] {
     return this.expiredAccounts;
   }
 

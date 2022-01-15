@@ -51,15 +51,11 @@ export default class DolomiteLiquidator {
   _liquidateAccounts = async () => {
     const lastBlockTimestamp: DateTime = await getLatestBlockTimestamp();
 
-    /* eslint-disable arrow-body-style */
-    const expiredAccounts = this.accountStore.getExpiredAccounts()
+    const expiredAccounts = this.accountStore.getExpirableDolomiteAccounts()
       .filter(a => !this.liquidationStore.contains(a))
       .filter(a => {
-        return Object.values(a.balances).some((balance => {
-          return balance.expiresAt && balance.expiresAt.lt(lastBlockTimestamp.toSeconds)
-        }))
+        return Object.values(a.balances).some((balance => balance.expiresAt?.lt(lastBlockTimestamp.toSeconds())))
       });
-    /* eslint-enable arrow-body-style */
 
     const riskParams = this.riskParamsStore.getDolomiteRiskParams();
     if (!riskParams) {

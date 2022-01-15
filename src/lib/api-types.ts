@@ -13,7 +13,7 @@ export interface ApiBalance {
 export interface ApiAccount {
   id: string;
   owner: string;
-  number: string;
+  number: Integer;
   balances: {
     [marketNumber: string]: ApiBalance;
   };
