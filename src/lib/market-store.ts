@@ -2,12 +2,21 @@ import { ApiMarket } from './api-types';
 import { getDolomiteMarkets } from '../clients/dolomite';
 import { delay } from './delay';
 import Logger from './logger';
+import {
+  getBlockNumber,
+} from '../helpers/block-helper';
 
 export default class MarketStore {
+  public blockNumber: number;
   public dolomiteMarkets: ApiMarket[];
 
   constructor() {
+    this.blockNumber = 0;
     this.dolomiteMarkets = [];
+  }
+
+  public getBlockNumber(): number {
+    return this.blockNumber;
   }
 
   public getDolomiteMarkets(): ApiMarket[] {
@@ -45,8 +54,10 @@ export default class MarketStore {
       message: 'Updating markets...',
     });
 
-    const { markets: nextDolomiteMarkets } = await getDolomiteMarkets();
+    const blockNumber = await getBlockNumber();
+    const { markets: nextDolomiteMarkets } = await getDolomiteMarkets(blockNumber);
 
+    this.blockNumber = blockNumber;
     this.dolomiteMarkets = nextDolomiteMarkets;
 
     Logger.info({

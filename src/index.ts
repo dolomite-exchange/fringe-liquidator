@@ -28,7 +28,7 @@ async function start() {
   const marketStore = new MarketStore();
   const accountStore = new AccountStore(marketStore);
   const liquidationStore = new LiquidationStore();
-  const riskParamsStore = new RiskParamsStore();
+  const riskParamsStore = new RiskParamsStore(marketStore);
   const dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore, riskParamsStore);
   const gasPriceUpdater = new GasPriceUpdater();
 

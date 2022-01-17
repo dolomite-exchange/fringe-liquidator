@@ -23,6 +23,7 @@ const owedPreferences = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
 export async function liquidateAccount(
   liquidAccount: ApiAccount,
   lastBlockTimestamp: DateTime,
+  blockNumber: number,
 ): Promise<TxResult | undefined> {
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED !== 'true') {
     return Promise.resolve(undefined);
@@ -38,6 +39,7 @@ export async function liquidateAccount(
   const liquidatable = await dolomite.getters.isAccountLiquidatable(
     liquidAccount.owner,
     new BigNumber(liquidAccount.number),
+    { blockNumber },
   );
 
   if (!liquidatable) {

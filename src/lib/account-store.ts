@@ -11,7 +11,6 @@ export default class AccountStore {
   public marketStore: MarketStore
 
   public liquidatableDolomiteAccounts: ApiAccount[];
-
   public expiredAccounts: ApiAccount[];
 
   constructor(marketStore: MarketStore) {
@@ -59,15 +58,22 @@ export default class AccountStore {
       message: 'Updating accounts...',
     });
 
+    const subgraphUrl = process.env.SUBGRAPH_URL
+    if (!subgraphUrl) {
+      Logger.error('Subgraph URL was not set!');
+      return;
+    }
+
+    const blockNumber = this.marketStore.getBlockNumber();
     const markets = this.marketStore.getDolomiteMarkets();
-    const marketIds = markets.map(market => market.id)
+    const marketIds = markets.map(market => market.id);
 
     const [
       { accounts: nextLiquidatableDolomiteAccounts },
       { accounts: nextExpiredAccounts },
     ] = await Promise.all([
-      getLiquidatableDolomiteAccounts(marketIds),
-      getExpiredAccounts(marketIds),
+      getLiquidatableDolomiteAccounts(marketIds, blockNumber),
+      getExpiredAccounts(marketIds, blockNumber),
     ]);
 
     // Do not put an account in both liquidatable and expired

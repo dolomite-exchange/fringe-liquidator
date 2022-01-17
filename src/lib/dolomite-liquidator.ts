@@ -66,6 +66,7 @@ export default class DolomiteLiquidator {
       return;
     }
 
+    const blockNumber = this.marketStore.getBlockNumber();
     const markets = this.marketStore.getDolomiteMarkets();
     const liquidatableAccounts = this.accountStore.getLiquidatableDolomiteAccounts()
       .filter(account => !this.liquidationStore.contains(account))
@@ -85,7 +86,7 @@ export default class DolomiteLiquidator {
     await Promise.all([
       ...liquidatableAccounts.map(async (account) => {
         try {
-          await liquidateAccount(account, lastBlockTimestamp);
+          await liquidateAccount(account, lastBlockTimestamp, blockNumber);
         } catch (error) {
           Logger.error({
             at: 'DolomiteLiquidator#_liquidateAccounts',

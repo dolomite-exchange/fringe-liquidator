@@ -19,25 +19,17 @@ import { dolomite } from '../helpers/web3';
 // Needed because of the "cannot use import statement outside a module" error
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-async function getAccounts(marketIds: number[], query: string): Promise<{ accounts: ApiAccount[] }> {
-  // noinspection UnnecessaryLocalVariableJS
-  const blockNumber = await fetch('', {
-    method: 'POST',
-    body: JSON.stringify({
-      query: '{ _meta { block { number } } }',
-    }),
-  })
-    .then(response => response.json())
-    .then((json: any) => json.data._meta.block.number)
-    .catch(() => 'latest')
+const subgraphUrl = process.env.SUBGRAPH_URL;
 
+async function getAccounts(marketIds: number[], query: string, blockNumber: number): Promise<{ accounts: ApiAccount[] }> {
+  // noinspection UnnecessaryLocalVariableJS
   dolomite.web3.eth.defaultBlock = blockNumber
 
   const marketIndexPromises = marketIds.map<Promise<MarketIndex>>(async marketId => {
     const {
       borrow,
       supply,
-    } = await dolomite.getters.getMarketCurrentIndex(new BigNumber(marketId));
+    } = await dolomite.getters.getMarketCurrentIndex(new BigNumber(marketId), { blockNumber });
     return {
       marketId,
       borrow: new BigNumber(borrow),
@@ -51,7 +43,7 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
       return memo
     }, {}))
 
-  const accounts: any = await fetch(`${process.env.SUBGRAPH_URL}`, {
+  const accounts: any = await fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({
       query,
@@ -95,6 +87,7 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
 
 export async function getLiquidatableDolomiteAccounts(
   marketIds: number[],
+  blockNumber: number,
 ): Promise<{ accounts: ApiAccount[] }> {
   const query = `
             query getActiveMarginAccounts($blockNumber: Int) {
@@ -114,12 +107,13 @@ export async function getLiquidatableDolomiteAccounts(
                     expiryAddress
                   }
                 }
-              }`
-  return getAccounts(marketIds, query)
+              }`;
+  return getAccounts(marketIds, query, blockNumber);
 }
 
 export async function getExpiredAccounts(
   marketIds: number[],
+  blockNumber,
 ): Promise<{ accounts: ApiAccount[] }> {
   const query = `
             query getActiveMarginAccounts($blockNumber: Int) {
@@ -140,16 +134,16 @@ export async function getExpiredAccounts(
                     expiryAddress
                   }
                 }
-              }`
-  return getAccounts(marketIds, query)
+              }`;
+  return getAccounts(marketIds, query, blockNumber);
 }
 
-export async function getDolomiteMarkets(): Promise<{ markets: ApiMarket[] }> {
-  const { data }: any = await fetch(`${process.env.SUBGRAPH_URL}`, {
+export async function getDolomiteMarkets(blockNumber: number): Promise<{ markets: ApiMarket[] }> {
+  const { data }: any = await fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({
-      query: `{
-                marketRiskInfos(orderBy: id) {
+      query: `query getMarketRiskInfos($blockNumber: Int) {
+                marketRiskInfos(orderBy: id, block { number: $blockNumber }) {
                   id
                   token {
                     marketId
@@ -160,7 +154,9 @@ export async function getDolomiteMarkets(): Promise<{ markets: ApiMarket[] }> {
                   liquidationRewardPremium
                 }
               }`,
-      variables: null,
+      variables: {
+        blockNumber,
+      },
     }),
     headers: {
       'content-type': 'application/json',
@@ -173,7 +169,7 @@ export async function getDolomiteMarkets(): Promise<{ markets: ApiMarket[] }> {
       return {
         id: Number(market.id),
         tokenAddress: market.token.id,
-        oraclePrice: await dolomite.getters.getMarketPrice(new BigNumber(market.id)),
+        oraclePrice: await dolomite.getters.getMarketPrice(new BigNumber(market.id), { blockNumber }),
         marginPremium: new BigNumber(decimalToString(market.marginPremium)),
         liquidationRewardPremium: new BigNumber(decimalToString(market.liquidationRewardPremium)),
       };
@@ -183,17 +179,19 @@ export async function getDolomiteMarkets(): Promise<{ markets: ApiMarket[] }> {
   return { markets: await Promise.all(markets) };
 }
 
-export async function getDolomiteRiskParams(): Promise<{ riskParam: ApiRiskParam }> {
+export async function getDolomiteRiskParams(blockNumber: number): Promise<{ riskParam: ApiRiskParam }> {
   const { data }: any = await fetch(`${process.env.SUBGRAPH_URL}`, {
     method: 'POST',
     body: JSON.stringify({
-      query: `{
-        dolomiteMargins {
+      query: `query getDolomiteMargins($blockNumber: Int) {
+        dolomiteMargins(block: { number: $blockNumber }) {
           liquidationRatio
           liquidationReward
         }
       }`,
-      variables: null,
+      variables: {
+        blockNumber,
+      },
     }),
     headers: {
       'content-type': 'application/json',

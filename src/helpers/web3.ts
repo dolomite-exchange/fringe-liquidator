@@ -55,24 +55,37 @@ export async function loadAccounts() {
 }
 
 export async function initializeDolomiteLiquidations() {
-  const proxyAddress = dolomite.contracts.liquidatorProxyV1.options.address;
-  const isProxyAproved = await dolomite.getters.getIsLocalOperator(
-    WALLET_ADDRESS,
-    proxyAddress,
-    { from: WALLET_ADDRESS },
-  );
+  await checkOperatorIsApproved(dolomite.contracts.liquidatorProxyV1.options.address);
+  await checkOperatorIsApproved(dolomite.contracts.liquidatorProxyV1WithAmm.options.address);
+}
 
-  if (!isProxyAproved) {
+async function checkOperatorIsApproved(operator: string) {
+  if (!(await getIsGlobalOperator(operator)) && !(await getIsLocalOperator(operator))) {
     Logger.info({
       at: 'web3#loadAccounts',
-      message: 'Liquidation proxy contract has not been approved. Approving...',
+      message: `Proxy contract at ${operator} has not been approved. Approving...`,
       address: WALLET_ADDRESS,
-      proxyAddress,
+      operator,
     });
 
     await dolomite.permissions.approveOperator(
-      proxyAddress,
+      operator,
       { from: WALLET_ADDRESS },
     );
   }
+}
+
+async function getIsGlobalOperator(operator: string): Promise<boolean> {
+  return dolomite.getters.getIsGlobalOperator(
+    operator,
+    { from: WALLET_ADDRESS },
+  );
+}
+
+async function getIsLocalOperator(operator: string): Promise<boolean> {
+  return dolomite.getters.getIsLocalOperator(
+    WALLET_ADDRESS,
+    operator,
+    { from: WALLET_ADDRESS },
+  );
 }
