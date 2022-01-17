@@ -20,7 +20,10 @@ const collateralPreferences = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(
 const owedPreferences = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
   .map((pref) => pref.trim());
 
-export async function liquidateAccount(liquidAccount: ApiAccount): Promise<TxResult | undefined> {
+export async function liquidateAccount(
+  liquidAccount: ApiAccount,
+  lastBlockTimestamp: DateTime,
+): Promise<TxResult | undefined> {
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED !== 'true') {
     return Promise.resolve(undefined);
   }
@@ -64,83 +67,18 @@ export async function liquidateAccount(liquidAccount: ApiAccount): Promise<TxRes
     });
 
   if (borrowMarkets.length === 0) {
-    return Promise.reject('Supposedly liquidatable account has no borrows');
+    return Promise.reject(new Error('Supposedly liquidatable account has no borrows'));
   }
 
   if (supplyMarkets.length === 0) {
-    return Promise.reject('Supposedly liquidatable account has no collateral');
+    return Promise.reject(new Error('Supposedly liquidatable account has no collateral'));
   }
 
   if (process.env.DOLOMITE_AUTO_SELL_COLLATERAL.toLowerCase() === 'true') {
-    return liquidateAccountInternalAndSellCollateral(liquidAccount, sender);
+    return liquidateAccountInternalAndSellCollateral(liquidAccount, sender, lastBlockTimestamp, false);
   } else {
     return liquidateAccountInternal(liquidAccount, sender);
   }
-}
-
-async function liquidateAccountInternalAndSellCollateral(
-  liquidAccount: ApiAccount,
-  sender: string,
-): Promise<TxResult> {
-  if (!process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS) {
-    const message = 'DOLOMITE_BRIDGE_CURRENCY_ADDRESS is not provided';
-    Logger.error({
-      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
-      message: message,
-    });
-    return Promise.reject(message);
-  }
-  if (!process.env.DOLOMITE_ACCOUNT_NUMBER) {
-    const message = 'DOLOMITE_ACCOUNT_NUMBER is not provided';
-    Logger.error({
-      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
-      message: message,
-    });
-    return Promise.reject(message);
-  }
-  if (!process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL) {
-    const message = 'DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL is not provided';
-    Logger.error({
-      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
-      message: message,
-    });
-    return Promise.reject(message);
-  }
-
-  const bridgeAddress = process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS.toLowerCase();
-  const owedBalance = Object.values(liquidAccount.balances)
-    .filter(value => new BigNumber(value.wei).lt('0'))[0];
-  const heldBalance = Object.values(liquidAccount.balances)
-    .filter(value => new BigNumber(value.wei).gt('0'))[0];
-  const gasPrice = getGasPrice();
-
-  const owedToken = owedBalance.tokenAddress.toLowerCase();
-  const heldToken = heldBalance.tokenAddress.toLowerCase();
-
-  let tokenPath: string[];
-  if (owedToken === bridgeAddress || heldToken === bridgeAddress) {
-    tokenPath = [heldBalance.tokenAddress, owedBalance.tokenAddress];
-  } else {
-    tokenPath = [heldBalance.tokenAddress, bridgeAddress, owedBalance.tokenAddress];
-  }
-  const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL.toLowerCase() === 'true';
-
-  return dolomite.liquidatorProxyWithAmm.liquidate(
-    process.env.WALLET_ADDRESS,
-    new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
-    liquidAccount.owner,
-    liquidAccount.number,
-    new BigNumber(owedBalance.marketId),
-    new BigNumber(heldBalance.marketId),
-    tokenPath,
-    null,
-    revertOnFailToSellCollateral,
-    {
-      gasPrice,
-      from: sender,
-      confirmationType: ConfirmationType.Hash,
-    },
-  );
 }
 
 async function liquidateAccountInternal(
@@ -166,7 +104,11 @@ async function liquidateAccountInternal(
   );
 }
 
-export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiMarket[], lastBlockTimestamp: DateTime) {
+export async function liquidateExpiredAccount(
+  account: ApiAccount,
+  markets: ApiMarket[],
+  lastBlockTimestamp: DateTime,
+) {
   if (process.env.DOLOMITE_EXPIRATIONS_ENABLED.toLowerCase() !== 'true') {
     return false;
   }
@@ -181,57 +123,69 @@ export async function liquidateExpiredAccount(account: ApiAccount, markets: ApiM
   const sender = process.env.WALLET_ADDRESS;
 
   if (process.env.DOLOMITE_AUTO_SELL_COLLATERAL.toLowerCase() === 'true') {
-    return liquidateExpiredAccountAndSellCollateralInternal(account, sender);
+    return liquidateAccountInternalAndSellCollateral(account, sender, lastBlockTimestamp, true);
   } else {
     return liquidateExpiredAccountInternal(account, markets, sender, lastBlockTimestamp);
   }
 }
 
-async function liquidateExpiredAccountAndSellCollateralInternal(
+async function liquidateAccountInternalAndSellCollateral(
   liquidAccount: ApiAccount,
   sender: string,
-): Promise<TxResult | undefined> {
+  lastBlockTimestamp: DateTime,
+  isExpiring: boolean,
+): Promise<TxResult> {
   if (!process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS) {
+    const message = 'DOLOMITE_BRIDGE_CURRENCY_ADDRESS is not provided';
     Logger.error({
-      at: 'dolomite-helpers#liquidateExpiredAccountAndSellCollateralInternal',
-      message: 'BRIDGE_CURRENCY_ADDRESS is not provided',
-      error: new Error('BRIDGE_CURRENCY_ADDRESS is not provided'),
+      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
+      message,
     });
-    return Promise.resolve(undefined);
+    return Promise.reject(new Error(message));
   }
-
-  const gasPrice = getGasPrice();
+  if (!process.env.DOLOMITE_ACCOUNT_NUMBER) {
+    const message = 'DOLOMITE_ACCOUNT_NUMBER is not provided';
+    Logger.error({
+      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
+      message,
+    });
+    return Promise.reject(new Error(message));
+  }
+  if (!process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL) {
+    const message = 'DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL is not provided';
+    Logger.error({
+      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
+      message,
+    });
+    return Promise.reject(new Error(message));
+  }
 
   const bridgeAddress = process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS.toLowerCase();
-  const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL.toLowerCase() === 'true';
   const owedBalance = Object.values(liquidAccount.balances)
-    .filter(value => new BigNumber(value.wei).lt('0'))[0];
-
+    .filter(value => {
+      if (isExpiring) {
+        // Return any market that has expired and is borrowed (negative)
+        const lastBlockTimestampBN = new BigNumber(Math.floor(lastBlockTimestamp.toMillis() / 1000));
+        return value.expiresAt?.lt(lastBlockTimestampBN) && new BigNumber(value.wei).lt('0');
+      } else {
+        return new BigNumber(value.wei).lt('0');
+      }
+    })[0];
   const heldBalance = Object.values(liquidAccount.balances)
     .filter(value => new BigNumber(value.wei).gt('0'))[0];
+  const gasPrice = getGasPrice();
 
-  if (
-    !owedBalance.expiryAddress
-    || !owedBalance.expiresAt
-    || owedBalance.expiryAddress.toLowerCase() !== dolomite.contracts.expiry.options.address.toLowerCase()
-  ) {
-    Logger.error({
-      at: 'dolomite-helpers#liquidateExpiredAccountAndSellCollateralInternal',
-      message: 'owedBalance does not expire or uses the wrong expiration contract address',
-      error: new Error('owedBalance does not expire or uses the wrong expiration contract address'),
-    });
-    return Promise.resolve(undefined);
-  }
+  const owedToken = owedBalance.tokenAddress.toLowerCase();
+  const heldToken = heldBalance.tokenAddress.toLowerCase();
 
   let tokenPath: string[];
-  if (
-    owedBalance.tokenAddress.toLowerCase() === bridgeAddress
-    || heldBalance.tokenAddress.toLowerCase() === bridgeAddress
-  ) {
+  if (owedToken === bridgeAddress || heldToken === bridgeAddress) {
     tokenPath = [heldBalance.tokenAddress, owedBalance.tokenAddress];
   } else {
     tokenPath = [heldBalance.tokenAddress, bridgeAddress, owedBalance.tokenAddress];
   }
+
+  const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL.toLowerCase() === 'true';
 
   return dolomite.liquidatorProxyWithAmm.liquidate(
     process.env.WALLET_ADDRESS,
@@ -241,7 +195,7 @@ async function liquidateExpiredAccountAndSellCollateralInternal(
     new BigNumber(owedBalance.marketId),
     new BigNumber(heldBalance.marketId),
     tokenPath,
-    owedBalance.expiresAt,
+    isExpiring ? (owedBalance.expiresAt ?? null) : null,
     revertOnFailToSellCollateral,
     {
       gasPrice,

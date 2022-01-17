@@ -76,7 +76,7 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
           tokenSymbol: value.token.symbol,
           tokenAddress: value.token.id,
           par: valuePar,
-          wei: new BigNumber(valuePar).times(index).dividedToIntegerBy('1000000000000000000'),
+          wei: new BigNumber(valuePar).times(index).div('1000000000000000000').integerValue(BigNumber.ROUND_HALF_UP),
           expiresAt: value.expirationTimestamp ? new BigNumber(value.expirationTimestamp) : undefined,
           expiryAddress: value.expiryAddress,
         }
@@ -85,7 +85,7 @@ async function getAccounts(marketIds: number[], query: string): Promise<{ accoun
       return {
         id: `${account.user.id}-${account.accountNumber}`,
         owner: account.user.id,
-        number: account.accountNumber,
+        number: new BigNumber(account.accountNumber),
         balances,
       }
     }));

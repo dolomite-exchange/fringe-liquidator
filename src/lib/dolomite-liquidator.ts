@@ -85,7 +85,7 @@ export default class DolomiteLiquidator {
     await Promise.all([
       ...liquidatableAccounts.map(async (account) => {
         try {
-          await liquidateAccount(account);
+          await liquidateAccount(account, lastBlockTimestamp);
         } catch (error) {
           Logger.error({
             at: 'DolomiteLiquidator#_liquidateAccounts',

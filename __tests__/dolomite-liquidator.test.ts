@@ -47,26 +47,21 @@ describe('dolomite-liquidator', () => {
       const expiredAccounts = getTestExpiredAccounts();
       const markets = getTestMarkets();
       const riskParams = getTestRiskParams();
-      accountStore.getLiquidatableDolomiteAccounts = jest.fn()
-        .mockImplementation(
-          () => liquidatableAccounts,
-        );
-      accountStore.getExpirableDolomiteAccounts = jest.fn()
-        .mockImplementation(
-          () => expiredAccounts,
-        );
-      marketStore.getDolomiteMarkets = jest.fn()
-        .mockImplementation(
-          () => markets,
-        );
-      riskParamsStore.getDolomiteRiskParams = jest.fn()
-        .mockImplementation(
-          () => riskParams,
-        );
-      dolomite.getters.isAccountLiquidatable = jest.fn()
-        .mockImplementation(
-          () => true,
-        );
+      accountStore.getLiquidatableDolomiteAccounts = jest.fn().mockImplementation(
+        () => liquidatableAccounts,
+      );
+      accountStore.getExpirableDolomiteAccounts = jest.fn().mockImplementation(
+        () => expiredAccounts,
+      );
+      marketStore.getDolomiteMarkets = jest.fn().mockImplementation(
+        () => markets,
+      );
+      riskParamsStore.getDolomiteRiskParams = jest.fn().mockImplementation(
+        () => riskParams,
+      );
+      dolomite.getters.isAccountLiquidatable = jest.fn().mockImplementation(
+        () => true,
+      );
 
       let commitCount = 0;
       const liquidations: any[] = [];
@@ -202,13 +197,17 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[0][1].toFixed())
         .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[0][4].toFixed())
-        .toBe(owedMarket);
+        .toBe(/* owedMarket */ liquidatableAccounts[0].balances[1].marketId.toString());
       expect(sortedLiquidations[0][5].toFixed())
-        .toBe(heldMarket);
+        .toBe(/* heldMarket */ liquidatableAccounts[0].balances[0].marketId.toString());
       expect(sortedLiquidations[0][6])
-        .toEqual(tokenPath);
+        .toEqual([
+          liquidatableAccounts[0].balances[0].tokenAddress,
+          process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS,
+          liquidatableAccounts[0].balances[1].tokenAddress,
+        ]);
       expect(sortedLiquidations[0][7])
-        .toEqual(expiry);
+        .toEqual(null);
       expect(sortedLiquidations[0][8])
         .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
 
@@ -217,13 +216,17 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[1][1].toFixed())
         .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[1][4].toFixed())
-        .toBe(owedMarket);
+        .toBe(/* owedMarket */ liquidatableAccounts[0].balances[0].marketId.toString());
       expect(sortedLiquidations[1][5].toFixed())
-        .toBe(heldMarket);
+        .toBe(/* heldMarket */ liquidatableAccounts[0].balances[1].marketId.toString());
       expect(sortedLiquidations[1][6])
-        .toEqual(tokenPath);
+        .toEqual([
+          liquidatableAccounts[0].balances[1].tokenAddress,
+          process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS,
+          liquidatableAccounts[0].balances[0].tokenAddress,
+        ]);
       expect(sortedLiquidations[1][7])
-        .toEqual(expiry);
+        .toEqual(null);
       expect(sortedLiquidations[1][8])
         .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
 
@@ -231,18 +234,22 @@ describe('dolomite-liquidator', () => {
         .toBe(process.env.WALLET_ADDRESS);
       expect(liquidatableExpiredAccounts[0][1])
         .toEqual(new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER));
-      expect(liquidatableExpiredAccounts[0][2]
-        .toEqual(expiredAccounts[0].owner)); // liquidAccountOwner
+      expect(liquidatableExpiredAccounts[0][2])
+        .toEqual(expiredAccounts[0].owner); // liquidAccountOwner
       expect(liquidatableExpiredAccounts[0][3])
         .toEqual(expiredAccounts[0].number); // liquidAccountNumber
       expect(liquidatableExpiredAccounts[0][4].toFixed())
-        .toBe(owedMarket);
+        .toBe(/* owedMarket */ expiredAccounts[0].balances[2].marketId.toString());
       expect(liquidatableExpiredAccounts[0][5].toFixed())
-        .toBe(heldMarket);
+        .toBe(/* heldMarket */ expiredAccounts[0].balances[1].marketId.toString());
       expect(liquidatableExpiredAccounts[0][6])
-        .toEqual(tokenPath);
+        .toEqual([
+          expiredAccounts[0].balances[1].tokenAddress,
+          process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS,
+          expiredAccounts[0].balances[2].tokenAddress,
+        ]);
       expect(liquidatableExpiredAccounts[0][7])
-        .toEqual(expiry);
+        .toEqual(expiredAccounts[0].balances[2].expiresAt);
       expect(liquidatableExpiredAccounts[0][8])
         .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
     });
