@@ -85,7 +85,23 @@ async function liquidateAccountInternalAndSellCollateral(
   if (!process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS) {
     const message = 'DOLOMITE_BRIDGE_CURRENCY_ADDRESS is not provided';
     Logger.error({
-      at: 'dolomite-helpers#liquidate',
+      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
+      message: message,
+    });
+    return Promise.reject(message);
+  }
+  if (!process.env.DOLOMITE_ACCOUNT_NUMBER) {
+    const message = 'DOLOMITE_ACCOUNT_NUMBER is not provided';
+    Logger.error({
+      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
+      message: message,
+    });
+    return Promise.reject(message);
+  }
+  if (!process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL) {
+    const message = 'DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL is not provided';
+    Logger.error({
+      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
       message: message,
     });
     return Promise.reject(message);
