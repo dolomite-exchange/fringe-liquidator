@@ -1,4 +1,9 @@
-FROM dydxprotocol/node:10.16.3-alpine
+FROM node:12.20.1-alpine
+
+RUN apk update &&  \
+    apk upgrade && \
+    apk -Uuv add --no-cache make g++ git python py-pip jq openssh curl openssh docker &&  \
+    pip install --upgrade pip awscli
 
 RUN adduser -S dolomite
 RUN mkdir -p /home/dolomite/app
@@ -12,6 +17,9 @@ COPY ./package.json ./package-lock.json ./
 RUN npm ci --loglevel warn
 
 COPY ./src ./src
+COPY ./tsconfig.json ./tsconfig.json
+COPY ./environment.d.ts ./environment.d.ts
+
 RUN npm run build
 
 CMD ["npm", "start"]

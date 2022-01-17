@@ -1,10 +1,19 @@
-import { Web3, DolomiteMargin } from '@dolomite-exchange/dolomite-margin';
+import {
+  DolomiteMargin,
+  Web3,
+} from '@dolomite-exchange/dolomite-margin';
 import Logger from '../lib/logger';
+import { ChainId } from '../lib/ChainId';
 
 const WALLET_ADDRESS = process.env.WALLET_ADDRESS.toLowerCase();
 const opts = { defaultAccount: WALLET_ADDRESS };
 
 const provider: any = new Web3.providers.HttpProvider(process.env.ETHEREUM_NODE_URL);
+
+const networkId = Number(process.env.NETWORK_ID);
+if (Object.keys(ChainId).indexOf(networkId.toString()) === -1) {
+  throw new Error(`Invalid networkId ${networkId}`)
+}
 
 export const dolomite = new DolomiteMargin(
   provider,

@@ -7,10 +7,6 @@ const subgraphUrl = process.env.SUBGRAPH_URL;
 let lastBlockTimestamp: DateTime = DateTime.fromSeconds(0);
 
 export async function getBlockNumber(): Promise<number> {
-  if (!subgraphUrl) {
-    return Promise.reject(new Error('Subgraph URL not found'));
-  }
-
   return fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({

@@ -1,21 +1,21 @@
 <p align="center"><img src="https://dolomite.io/assets/img/logo.png" width="256" /></p>
 
 <div align="center">
-  <a href='https://hub.docker.com/r/dolomite-exchange/liquidator' style="text-decoration:none;">
+  <a href='https://hub.docker.com/r/dolomiteprotocol/liquidator' style="text-decoration:none;">
     <img src='https://img.shields.io/badge/docker-container-blue.svg?longCache=true' alt='Docker' />
   </a>
   <a href='https://coveralls.io/github/dolomite-exchange/liquidator' style="text-decoration:none;">
     <img src='https://coveralls.io/repos/github/dolomite-exchange/liquidator/badge.svg?t=toKMwT' alt='Coverage Status' />
   </a>
-  <a href='https://github.com/dolomite-exchange/dolomite-v2-protocol/blob/master/LICENSE' style="text-decoration:none;">
-    <img src='https://img.shields.io/github/license/dolomite-exchange/dolomite-v2-protocol.svg?longCache=true' alt='License' />
+  <a href='https://github.com/dolomite-exchange/dolomite-margin/blob/master/LICENSE' style="text-decoration:none;">
+    <img src='https://img.shields.io/github/license/dolomite-exchange/dolomite-margin.svg?longCache=true' alt='License' />
   </a>
   <a href='https://t.me/dolomite_official' style="text-decoration:none;">
     <img src='https://img.shields.io/badge/chat-on%20telegram-9cf.svg?longCache=true' alt='Telegram' />
   </a>
 </div>
 
-# Dolomite V2 Liquidator
+# Dolomite Margin Liquidator
 
 Bot to automatically liquidate undercollateralized and expired Dolomite accounts.
 
@@ -29,11 +29,12 @@ Requires a running [docker](https://docker.com) engine.
 docker run \
   -e WALLET_ADDRESS=0x2c7536E3605D9C16a7a3D7b1898e529396a65c23 \
   -e WALLET_PRIVATE_KEY=0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318 \
-  -e ETHEREUM_NODE_URL=https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY \
-  -e DOLOMITE_LIQUIDATIONS_ENABLED=true \
-  -e DOLOMITE_EXPIRATIONS_ENABLED=false \
-  -e DOLOMITE_AUTO_SELL_COLLATERAL=true \
+  -e DOLOMITE_LIQUIDATIONS_ENABLED=true|false \
+  -e DOLOMITE_EXPIRATIONS_ENABLED=true|false \
+  -e DOLOMITE_AUTO_SELL_COLLATERAL=true|false \
   -e DOLOMITE_BRIDGE_CURRENCY_ADDRESS=<WETH_ADDRESS> \
+  -e ETHEREUM_NODE_URL=https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY \
+  -e NETWORK_ID=80001 \
   dolomite/liquidator
 ```
 
@@ -101,7 +102,6 @@ Liquidator Account:
 |   NETWORK_ID                                  |   Ethereum Network ID
 |   ETHEREUM_NODE_URL                           |   **REQUIRED** The URL of the Ethereum node to use (e.g. an [Alchemy](https://alchemy.com/?r=99314874-10ab-44f3-9070-9abd86f4388d) or [Infura](https://infura.io/) endpoint)
 |   LIQUIDATION_KEY_EXPIRATION_SEC              |   Amount of time in seconds to wait before trying to liquidate the same account again
-|   GAS_STATION_URL                             |   URL of the gas station API to use
 |   GAS_PRICE_MULTIPLIER                        |   How much to multiply the `fast` gas price by when sending transactions
 |   GAS_PRICE_UPDATE_FREQUENCY_SEC              |   How frequently to update the gas price
 |   DOLOMITE_AUTO_SELL_COLLATERAL               |   True to automatically sell collateral on Dolomite to repay debt, holding on to excess tokens as 

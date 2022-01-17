@@ -29,7 +29,7 @@ describe('dolomite-liquidator', () => {
     marketStore = new MarketStore();
     accountStore = new AccountStore(marketStore);
     liquidationStore = new LiquidationStore();
-    riskParamsStore = new RiskParamsStore();
+    riskParamsStore = new RiskParamsStore(marketStore);
     dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore, riskParamsStore);
     (blockHelper.getLatestBlockTimestamp as any) = jest.fn()
       .mockImplementation(

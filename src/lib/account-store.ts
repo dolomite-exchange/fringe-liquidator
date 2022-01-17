@@ -58,12 +58,6 @@ export default class AccountStore {
       message: 'Updating accounts...',
     });
 
-    const subgraphUrl = process.env.SUBGRAPH_URL
-    if (!subgraphUrl) {
-      Logger.error('Subgraph URL was not set!');
-      return;
-    }
-
     const blockNumber = this.marketStore.getBlockNumber();
     const markets = this.marketStore.getDolomiteMarkets();
     const marketIds = markets.map(market => market.id);

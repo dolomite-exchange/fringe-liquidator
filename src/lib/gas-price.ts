@@ -1,11 +1,12 @@
 import request from 'request-promise-native';
 import Logger from './logger';
+import { ChainId } from './ChainId';
 
 let lastPrice = process.env.GAS_INITIAL_PRICE;
 
 /**
- * the gas price returned from the API gives the gas prices by gwei*10 for some reason
- * so we multiply by 1e8, not 1e9
+ * the gas price returned from the API gives the gas prices by `gwei * 10` for some reason. So, we multiply by 1e8,
+ * instead of 1e9
  */
 export async function updateGasPrice() {
   let response;
@@ -39,7 +40,9 @@ export async function updateGasPrice() {
     throw new Error('GAS_PRICE_ADDITION is invalid');
   }
 
-  const totalWei = `${Math.round((Number(fast) * multiplier * 100000000) + addition)}`;
+  const networkId = Number(process.env.NETWORK_ID)
+  const base = networkId === ChainId.Ethereum ? 100_000_000 : 1_000_000_000;
+  const totalWei = `${Math.round((Number(fast) * multiplier * base) + addition)}`;
 
   Logger.info({
     at: 'updateGasPrice',
@@ -60,16 +63,24 @@ async function getGasPrices() {
     message: 'Fetching gas prices',
   });
 
-  const networkId = Number(process.env.NETWORK_ID)
-  if (networkId === 80001) {
-    // mumbai testnet
-    return { fast: 10 };
+  const networkId = Number(process.env.NETWORK_ID);
+  let uri: string;
+  if (networkId === ChainId.Matic) {
+    uri = 'https://gasstation-mainnet.matic.network/';
+  } else if (networkId === ChainId.Mumbai) {
+    uri = 'https://gasstation-mumbai.matic.today/';
+  } else if (networkId === ChainId.Arbitrum) {
+    return Promise.reject(new Error('Could not find URL for Arbitrum'));
+  } else if (networkId === ChainId.ArbitrumTest) {
+    return Promise.reject(new Error('Could not find URL for Arbitrum Test'));
   } else {
-    const response = await request({
-      method: 'GET',
-      uri: process.env.GAS_STATION_URL,
-      timeout: process.env.GAS_REQUEST_TIMEOUT_MS,
-    });
-    return JSON.parse(response);
+    return Promise.reject(new Error(`Could not find network ID ${networkId}`));
   }
+
+  const response = await request({
+    uri,
+    method: 'GET',
+    timeout: process.env.GAS_REQUEST_TIMEOUT_MS,
+  });
+  return JSON.parse(response);
 }
