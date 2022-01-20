@@ -187,6 +187,8 @@ async function liquidateAccountInternalAndSellCollateral(
     tokenPath = [heldBalance.tokenAddress, bridgeAddress, owedBalance.tokenAddress];
   }
 
+  // TODO make this a param - Apply 5% discount
+  const minOwedOutputAmount = owedBalance.wei.abs().times('0.95').integerValue(BigNumber.ROUND_FLOOR);
   const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL.toLowerCase() === 'true';
 
   return dolomite.liquidatorProxyWithAmm.liquidate(
@@ -198,6 +200,7 @@ async function liquidateAccountInternalAndSellCollateral(
     new BigNumber(heldBalance.marketId),
     tokenPath,
     isExpiring ? (owedBalance.expiresAt ?? null) : null,
+    minOwedOutputAmount,
     revertOnFailToSellCollateral,
     {
       gasPrice,
