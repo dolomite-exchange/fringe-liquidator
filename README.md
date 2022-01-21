@@ -106,6 +106,7 @@ Liquidator Account:
 |   GAS_PRICE_UPDATE_FREQUENCY_SEC              |   How frequently to update the gas price
 |   DOLOMITE_AUTO_SELL_COLLATERAL               |   True to automatically sell collateral on Dolomite to repay debt, holding on to excess tokens as 
 |   DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL  |   True to revert the liquidation if the collateral cannot be sold to pay off the debt. If set to false and collateral cannot be liquidated to recover debt, the user will need to maintain sufficient collateralization to prevent being liquidated. 
+|   DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT    |   This parameter is only used if `DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL` is set to `false`. A discount to apply on the required output of the trade (from held collateral to owed balance), or else the transaction reverts. Must be less than `1.00` and greater than or equal to `0`. If this value equals `0.05`, the `minOutputAmount` of the trade from held amount to owed amount must be greater than or equal to `owedBalance * (1.00 - discount)`.
 |   DOLOMITE_BRIDGE_CURRENCY_ADDRESS            |   The address of the bridge currency used as connecting asset to sell collateral for the debt token. On most Ethereum-based networks, this will be the WETH address. Meaning, Trades from LRC --> USDC are instead routed as such LRC --> WETH --> USDC.  
 |   DOLOMITE_LIQUIDATIONS_ENABLED               |   true or false - whether to liquidate Dolomite accounts (true by default)
 |   DOLOMITE_EXPIRATIONS_ENABLED                |   true or false - whether to liquidate expired accounts (false by default)
@@ -117,3 +118,4 @@ Liquidator Account:
 |   DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS      |   How long to wait before liquidating expired accounts. The spread for liquidating expired accounts ramps up linearly from 0% to 5% over 1 hour.
 |   ACCOUNT_POLL_INTERVAL_MS                    |   How frequently to poll for liquidatable accounts
 |   MARKET_POLL_INTERVAL_MS                     |   How frequently to poll for market updates
+|   RISK_PARAMS_POLL_INTERVAL_MS                |   How frequently to poll for risk params updates

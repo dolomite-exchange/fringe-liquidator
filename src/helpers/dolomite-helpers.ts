@@ -187,8 +187,16 @@ async function liquidateAccountInternalAndSellCollateral(
     tokenPath = [heldBalance.tokenAddress, bridgeAddress, owedBalance.tokenAddress];
   }
 
-  // TODO make this a param - Apply 5% discount
-  const minOwedOutputAmount = owedBalance.wei.abs().times('0.95').integerValue(BigNumber.ROUND_FLOOR);
+  const minOwedOutputDiscount = new BigNumber(process.env.DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT);
+  if (minOwedOutputDiscount.gte(INTEGERS.ONE)) {
+    return Promise.reject(new Error('DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be less than 1.00'))
+  } else if (minOwedOutputDiscount.lt(INTEGERS.ZERO)) {
+    return Promise.reject(new Error('DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be greater than or equal to 0'));
+  }
+
+  const minOwedOutputAmount = owedBalance.wei.abs()
+    .times(INTEGERS.ONE.minus(minOwedOutputDiscount))
+    .integerValue(BigNumber.ROUND_FLOOR);
   const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL.toLowerCase() === 'true';
 
   return dolomite.liquidatorProxyWithAmm.liquidate(
