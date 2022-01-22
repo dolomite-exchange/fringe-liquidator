@@ -5,7 +5,7 @@
   "main": "build/src/index.js",
   "scripts": {
     "test": "NODE_ENV=test jest --runInBand",
-    "coverage": "NODE_ENV=test jest --coverage --runInBand --forceExit",
+    "coverage": "NODE_ENV=test jest --coverage --runInBand --forceExit --coverageReporters=text-lcov | node_modules/.bin/coveralls",
     "build": "rm -rf build/ && tsc",
     "start": "node build/src/index.js",
     "lint": "eslint . --ext .js --ignore-path .gitignore",
