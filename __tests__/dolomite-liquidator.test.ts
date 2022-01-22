@@ -1,4 +1,7 @@
-import { BigNumber } from '@dolomite-exchange/dolomite-margin';
+import {
+  BigNumber,
+  INTEGERS,
+} from '@dolomite-exchange/dolomite-margin';
 import { AccountOperation } from '@dolomite-exchange/dolomite-margin/dist/src/modules/operate/AccountOperation';
 import { DateTime } from 'luxon';
 import * as blockHelper from '../src/helpers/block-helper';
@@ -192,6 +195,8 @@ describe('dolomite-liquidator', () => {
         return liquidations.find((l) => l[2] === account.owner && l[3] === account.number);
       });
 
+      const discount = INTEGERS.ONE.minus(new BigNumber(process.env.DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT));
+
       expect(sortedLiquidations[0][0])
         .toBe(process.env.WALLET_ADDRESS);
       expect(sortedLiquidations[0][1].toFixed())
@@ -209,6 +214,8 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[0][7])
         .toEqual(null);
       expect(sortedLiquidations[0][8])
+        .toEqual(liquidatableAccounts[0].balances[1].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
+      expect(sortedLiquidations[0][9])
         .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
 
       expect(sortedLiquidations[1][0])
@@ -228,6 +235,8 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[1][7])
         .toEqual(null);
       expect(sortedLiquidations[1][8])
+        .toEqual(liquidatableAccounts[1].balances[0].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
+      expect(sortedLiquidations[1][9])
         .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
 
       expect(liquidatableExpiredAccounts[0][0])
@@ -251,6 +260,8 @@ describe('dolomite-liquidator', () => {
       expect(liquidatableExpiredAccounts[0][7])
         .toEqual(expiredAccounts[0].balances[2].expiresAt);
       expect(liquidatableExpiredAccounts[0][8])
+        .toEqual(expiredAccounts[0].balances[2].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
+      expect(liquidatableExpiredAccounts[0][9])
         .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
     });
   });
