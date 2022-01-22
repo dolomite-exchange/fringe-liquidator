@@ -1,11 +1,11 @@
 <p align="center"><img src="https://dolomite.io/assets/img/logo.png" width="256" /></p>
 
 <div align="center">
-  <a href='https://hub.docker.com/r/dolomiteprotocol/amm-rebalancer' style="text-decoration:none;">
+  <a href='https://hub.docker.com/r/dolomiteprotocol/liquidator' style="text-decoration:none;">
     <img src='https://img.shields.io/badge/docker-container-blue.svg?longCache=true' alt='Docker' />
   </a>
-  <a href='https://coveralls.io/github/dolomite-exchange/amm-rebalancer' style="text-decoration:none;">
-    <img src='https://coveralls.io/repos/github/dolomite-exchange/amm-rebalancer/badge.svg?t=toKMwT' alt='Coverage Status' />
+  <a href='https://coveralls.io/github/dolomite-exchange/liquidator' style="text-decoration:none;">
+    <img src='https://coveralls.io/repos/github/dolomite-exchange/liquidator/badge.svg?t=toKMwT' alt='Coverage Status' />
   </a>
   <a href='https://github.com/dolomite-exchange/dolomite-margin/blob/master/LICENSE' style="text-decoration:none;">
     <img src='https://img.shields.io/github/license/dolomite-exchange/dolomite-margin.svg?longCache=true' alt='License' />
@@ -15,9 +15,9 @@
   </a>
 </div>
 
-# Dolomite V2 Amm Rebalancer
+# Dolomite Margin Liquidator
 
-Bot to automatically rebalance the AMM pools on testnet and mainnet using different strategies.
+Bot to automatically liquidate undercollateralized and expired Dolomite accounts.
 
 ## Usage
 
@@ -35,7 +35,7 @@ docker run \
   -e DOLOMITE_BRIDGE_CURRENCY_ADDRESS=<WETH_ADDRESS> \
   -e ETHEREUM_NODE_URL=https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY \
   -e NETWORK_ID=80001 \
-  dolomite/amm_rebalancer
+  dolomite/liquidator
 ```
 
 ## Overview
