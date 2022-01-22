@@ -1,7 +1,7 @@
 {
-  "name": "liquidator",
+  "name": "amm-rebalancer",
   "version": "1.0.0",
-  "description": "Microservice to bid on Dolomite liquidation auctions",
+  "description": "Bot to automatically rebalance the AMM pools on testnet and mainnet using different strategies",
   "main": "build/src/index.js",
   "scripts": {
     "test": "NODE_ENV=test jest --runInBand",
@@ -15,14 +15,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dolomite-exchange/liquidator.git"
+    "url": "git+https://github.com/dolomite-exchange/amm-rebalancer.git"
   },
   "author": "Dolomite",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/dolomite-exchange/liquidator/issues"
+    "url": "https://github.com/dolomite-exchange/amm-rebalancer/issues"
   },
-  "homepage": "https://github.com/dolomite-exchange/liquidator#readme",
+  "homepage": "https://github.com/dolomite-exchange/amm-rebalancer#readme",
   "dependencies": {
     "@dolomite-exchange/dolomite-margin": "^0.1.9",
     "dotenv-flow": "^0.4.0",
