@@ -17,6 +17,7 @@ COPY ./package.json ./package-lock.json ./
 RUN npm ci --loglevel warn
 
 COPY ./src ./src
+COPY ./__tests__ ./__tests__
 COPY ./tsconfig.json ./tsconfig.json
 COPY ./environment.d.ts ./environment.d.ts
 

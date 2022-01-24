@@ -1,5 +1,6 @@
-/* eslint-disable no-shadow,max-len */
-import { BigNumber } from '@dolomite-exchange/dolomite-margin'
+/* eslint-disable max-len */
+import fetch from 'node-fetch';
+import { BigNumber } from '@dolomite-exchange/dolomite-margin';
 import { decimalToString } from '@dolomite-exchange/dolomite-margin/dist/src/lib/Helpers';
 import {
   GraphqlAccount,
@@ -14,10 +15,6 @@ import {
   MarketIndex,
 } from '../lib/api-types';
 import { dolomite } from '../helpers/web3';
-
-// @ts-ignore
-// Needed because of the "cannot use import statement outside a module" error
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const subgraphUrl = process.env.SUBGRAPH_URL;
 
@@ -56,7 +53,13 @@ async function getAccounts(marketIds: number[], query: string, blockNumber: numb
     },
   })
     .then(response => response.json())
-    .then((response: any) => response.data.marginAccounts as GraphqlAccount[])
+    .then((response: any) => {
+      if (response.errors && typeof response.errors === 'object') {
+        return Promise.reject(response.errors[0]);
+      } else {
+        return response.data.marginAccounts as GraphqlAccount[];
+      }
+    })
     .then(graphqlAccounts => graphqlAccounts.map<ApiAccount>(account => {
       const balances = account.tokenValues.reduce<{ [marketNumber: string]: ApiBalance }>((memo, value) => {
         const tokenBase = new BigNumber('10').pow(value.token.decimals)
@@ -139,11 +142,11 @@ export async function getExpiredAccounts(
 }
 
 export async function getDolomiteMarkets(blockNumber: number): Promise<{ markets: ApiMarket[] }> {
-  const { data }: any = await fetch(subgraphUrl, {
+  const result: any = await fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({
       query: `query getMarketRiskInfos($blockNumber: Int) {
-                marketRiskInfos(orderBy: id, block { number: $blockNumber }) {
+                marketRiskInfos(orderBy: id, block: { number: $blockNumber }) {
                   id
                   token {
                     marketId
@@ -163,8 +166,13 @@ export async function getDolomiteMarkets(blockNumber: number): Promise<{ markets
     },
   }).then(response => response.json());
 
+  if (result.errors && typeof result.errors === 'object') {
+    // noinspection JSPotentiallyInvalidTargetOfIndexedPropertyAccess
+    return Promise.reject(result.errors[0]);
+  }
+
   /* eslint-disable */
-  const markets = (data.marketRiskInfos as GraphqlMarket[])
+  const markets = (result.data.marketRiskInfos as GraphqlMarket[])
     .map<Promise<ApiMarket>>(async market => {
       return {
         id: Number(market.id),
@@ -179,8 +187,8 @@ export async function getDolomiteMarkets(blockNumber: number): Promise<{ markets
   return { markets: await Promise.all(markets) };
 }
 
-export async function getDolomiteRiskParams(blockNumber: number): Promise<{ riskParam: ApiRiskParam }> {
-  const { data }: any = await fetch(`${process.env.SUBGRAPH_URL}`, {
+export async function getDolomiteRiskParams(blockNumber: number): Promise<{ riskParams: ApiRiskParam }> {
+  const result: any = await fetch(`${process.env.SUBGRAPH_URL}`, {
     method: 'POST',
     body: JSON.stringify({
       query: `query getDolomiteMargins($blockNumber: Int) {
@@ -198,13 +206,18 @@ export async function getDolomiteRiskParams(blockNumber: number): Promise<{ risk
     },
   }).then(response => response.json());
 
+  if (result.errors && typeof result.errors === 'object') {
+    // noinspection JSPotentiallyInvalidTargetOfIndexedPropertyAccess
+    return Promise.reject(result.errors[0]);
+  }
+
   // eslint-disable-next-line arrow-body-style
-  const riskParams = (data.marketRiskInfos as GraphqlRiskParams[]).map<ApiRiskParam>(riskParam => {
+  const riskParams = (result.data.dolomiteMargins as GraphqlRiskParams[]).map<ApiRiskParam>(riskParam => {
     return {
       liquidationRatio: new BigNumber(decimalToString(riskParam.liquidationRatio)),
       liquidationReward: new BigNumber(decimalToString(riskParam.liquidationReward)),
     }
   })
 
-  return { riskParam: riskParams[0] };
+  return { riskParams: riskParams[0] };
 }

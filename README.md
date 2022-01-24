@@ -33,9 +33,9 @@ docker run \
   -e DOLOMITE_EXPIRATIONS_ENABLED=true|false \
   -e DOLOMITE_AUTO_SELL_COLLATERAL=true|false \
   -e DOLOMITE_BRIDGE_CURRENCY_ADDRESS=<WETH_ADDRESS> \
-  -e ETHEREUM_NODE_URL=https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_KEY \
+  -e ETHEREUM_NODE_URL=https://polygon-mumbai.infura.io/v3/367998edbc0f428f97ef07db8695f113 \
   -e NETWORK_ID=80001 \
-  dolomite/liquidator
+  dolomiteprotocol/liquidator
 ```
 
 ## Overview

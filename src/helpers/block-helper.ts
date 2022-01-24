@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 import { DateTime } from 'luxon';
 import { dolomite } from './web3';
 import Logger from '../lib/logger';

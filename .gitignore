@@ -17,3 +17,5 @@ consoleScripts.js
 .idea
 
 .coveralls.yml
+
+start-docker-test.sh
