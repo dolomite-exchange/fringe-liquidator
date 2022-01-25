@@ -2,7 +2,7 @@ import { delay } from './delay';
 import { updateGasPrice } from './gas-price';
 import Logger from './logger';
 
-const UPDATE_FREQUENCY_SEC = Number(process.env.GAS_PRICE_UPDATE_FREQUENCY_SEC);
+const UPDATE_FREQUENCY_MS = Number(process.env.GAS_PRICE_UPDATE_FREQUENCY_MS);
 
 export default class GasPriceUpdater {
   start = () => {
@@ -26,7 +26,7 @@ export default class GasPriceUpdater {
         });
       }
 
-      await delay(UPDATE_FREQUENCY_SEC * 1000);
+      await delay(UPDATE_FREQUENCY_MS);
     }
   }
 }

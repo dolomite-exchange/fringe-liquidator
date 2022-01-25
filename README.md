@@ -103,7 +103,7 @@ Liquidator Account:
 |   ETHEREUM_NODE_URL                           |   **REQUIRED** The URL of the Ethereum node to use (e.g. an [Alchemy](https://alchemy.com/?r=99314874-10ab-44f3-9070-9abd86f4388d) or [Infura](https://infura.io/) endpoint)
 |   LIQUIDATION_KEY_EXPIRATION_SEC              |   Amount of time in seconds to wait before trying to liquidate the same account again
 |   GAS_PRICE_MULTIPLIER                        |   How much to multiply the `fast` gas price by when sending transactions
-|   GAS_PRICE_UPDATE_FREQUENCY_SEC              |   How frequently to update the gas price
+|   GAS_PRICE_UPDATE_FREQUENCY_MS              |   How frequently to update the gas price
 |   DOLOMITE_AUTO_SELL_COLLATERAL               |   True to automatically sell collateral on Dolomite to repay debt, holding on to excess tokens as 
 |   DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL  |   True to revert the liquidation if the collateral cannot be sold to pay off the debt. If set to false and collateral cannot be liquidated to recover debt, the user will need to maintain sufficient collateralization to prevent being liquidated. 
 |   DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT    |   This parameter is only used if `DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL` is set to `false`. A discount to apply on the required output of the trade (from held collateral to owed balance), or else the transaction reverts. Must be less than `1.00` and greater than or equal to `0`. If this value equals `0.05`, the `minOutputAmount` of the trade from held amount to owed amount must be greater than or equal to `owedBalance * (1.00 - discount)`.

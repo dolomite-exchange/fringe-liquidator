@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/dolomite-exchange/liquidator#readme",
   "dependencies": {
-    "@dolomite-exchange/dolomite-margin": "^0.1.9",
+    "@dolomite-exchange/dolomite-margin": "^0.1.12",
     "dotenv-flow": "^0.4.0",
     "lodash": "^4.17.15",
     "lru-cache": "^5.1.1",

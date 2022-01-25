@@ -271,7 +271,7 @@ async function liquidateExpiredAccountInternal(
 
       if (delayHasPassed) {
         expiredMarkets.push(marketId);
-        operation.fullyLiquidateExpiredAccountV2(
+        operation.fullyLiquidateExpiredAccount(
           process.env.WALLET_ADDRESS,
           new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
           account.owner,

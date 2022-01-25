@@ -1,7 +1,10 @@
 import { BigNumber } from '@dolomite-exchange/dolomite-margin';
 import { INTEGERS } from '@dolomite-exchange/dolomite-margin/dist/src/lib/Constants';
 import { DateTime } from 'luxon';
-import { liquidateAccount, liquidateExpiredAccount } from '../helpers/dolomite-helpers';
+import {
+  liquidateAccount,
+  liquidateExpiredAccount,
+} from '../helpers/dolomite-helpers';
 import Logger from './logger';
 import { delay } from './delay';
 import AccountStore from './account-store';
@@ -9,7 +12,11 @@ import LiquidationStore from './liquidation-store';
 import MarketStore from './market-store';
 import { getLatestBlockTimestamp } from '../helpers/block-helper';
 import RiskParamsStore from './risk-params-store';
-import { ApiAccount, ApiMarket, ApiRiskParam } from './api-types';
+import {
+  ApiAccount,
+  ApiMarket,
+  ApiRiskParam,
+} from './api-types';
 
 export default class DolomiteLiquidator {
   public accountStore: AccountStore;
@@ -117,7 +124,10 @@ export default class DolomiteLiquidator {
       supply: INTEGERS.ZERO,
     };
     const base = new BigNumber('1000000000000000000');
-    const { supply, borrow } = Object.values(account.balances).reduce((memo, balance) => {
+    const {
+      supply,
+      borrow,
+    } = Object.values(account.balances).reduce((memo, balance) => {
       const market = markets[balance.marketId];
       const value = balance.wei.times(market.oraclePrice);
       const adjust = base.plus(market.marginPremium);

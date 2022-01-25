@@ -6,17 +6,13 @@ export interface GraphqlTokenValue {
     decimals: string
   }
   valuePar: string
-  expirationTimestamp?: string
-  expiryAddress?: string
-}
-
-export interface GraphqlAddress {
-  id: string
+  expirationTimestamp: string | null
+  expiryAddress: string | null
 }
 
 export interface GraphqlAccount {
   id: string
-  user: GraphqlAddress
+  user: string
   accountNumber: string
   tokenValues: GraphqlTokenValue[]
 }

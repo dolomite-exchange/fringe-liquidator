@@ -40,6 +40,8 @@ async function getAccounts(marketIds: number[], query: string, blockNumber: numb
       return memo
     }, {}))
 
+  const decimalBase = new BigNumber('1000000000000000000');
+
   const accounts: any = await fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({
@@ -65,21 +67,21 @@ async function getAccounts(marketIds: number[], query: string, blockNumber: numb
         const tokenBase = new BigNumber('10').pow(value.token.decimals)
         const valuePar = new BigNumber(value.valuePar).times(tokenBase)
         const indexObject = marketIndexMap[value.token.marketId]
-        const index = new BigNumber(valuePar).lt('0') ? indexObject.borrow : indexObject.supply
+        const index = (new BigNumber(valuePar).lt('0') ? indexObject.borrow : indexObject.supply).times(decimalBase)
         memo[value.token.marketId] = {
           marketId: Number(value.token.marketId),
           tokenSymbol: value.token.symbol,
           tokenAddress: value.token.id,
           par: valuePar,
-          wei: new BigNumber(valuePar).times(index).div('1000000000000000000').integerValue(BigNumber.ROUND_HALF_UP),
-          expiresAt: value.expirationTimestamp ? new BigNumber(value.expirationTimestamp) : undefined,
+          wei: new BigNumber(valuePar).times(index).div(decimalBase).integerValue(BigNumber.ROUND_HALF_UP),
+          expiresAt: value.expirationTimestamp ? new BigNumber(value.expirationTimestamp) : null,
           expiryAddress: value.expiryAddress,
         }
         return memo
       }, {})
       return {
-        id: `${account.user.id}-${account.accountNumber}`,
-        owner: account.user.id,
+        id: `${account.user}-${account.accountNumber}`,
+        owner: account.user,
         number: new BigNumber(account.accountNumber),
         balances,
       }
@@ -96,14 +98,14 @@ export async function getLiquidatableDolomiteAccounts(
             query getActiveMarginAccounts($blockNumber: Int) {
                 marginAccounts(where: { hasBorrowedValue: true }, block: { number: $blockNumber }) {
                   id
-                  user {
-                    id
-                  }
+                  user
                   accountNumber
                   tokenValues {
                     token {
+                      id
                       marketId
                       decimals
+                      symbol
                     }
                     valuePar
                     expirationTimestamp
@@ -122,9 +124,7 @@ export async function getExpiredAccounts(
             query getActiveMarginAccounts($blockNumber: Int) {
                 marginAccounts(where: { hasBorrowedValue: true, hasExpiration: true }, block: { number: $blockNumber }) {
                   id
-                  user {
-                    id
-                  }
+                  user
                   accountNumber
                   tokenValues {
                     token {

@@ -6,8 +6,8 @@ export interface ApiBalance {
   tokenSymbol: string
   par: Integer;
   wei: Integer;
-  expiresAt?: Integer;
-  expiryAddress?: string;
+  expiresAt: Integer | null;
+  expiryAddress: string | null;
 }
 
 export interface ApiAccount {
