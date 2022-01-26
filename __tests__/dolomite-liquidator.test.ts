@@ -4,7 +4,6 @@ import {
 } from '@dolomite-exchange/dolomite-margin';
 import { AccountOperation } from '@dolomite-exchange/dolomite-margin/dist/src/modules/operate/AccountOperation';
 import { DateTime } from 'luxon';
-import * as blockHelper from '../src/helpers/block-helper';
 import { dolomite } from '../src/helpers/web3';
 import AccountStore from '../src/lib/account-store';
 import {
@@ -18,7 +17,6 @@ import MarketStore from '../src/lib/market-store';
 import RiskParamsStore from '../src/lib/risk-params-store';
 
 jest.mock('@dolomite-exchange/dolomite-margin/dist/src/modules/operate/AccountOperation');
-jest.mock('../src/helpers/block-helper');
 
 describe('dolomite-liquidator', () => {
   let accountStore: AccountStore;
@@ -34,10 +32,7 @@ describe('dolomite-liquidator', () => {
     liquidationStore = new LiquidationStore();
     riskParamsStore = new RiskParamsStore(marketStore);
     dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore, riskParamsStore);
-    (blockHelper.getLatestBlockTimestamp as any) = jest.fn()
-      .mockImplementation(
-        async () => DateTime.utc(2020, 1, 1),
-      );
+    (marketStore.getBlockTimestamp as any) = jest.fn().mockImplementation(() => DateTime.utc(2020, 1, 1));
   });
 
   describe('#_liquidateAccounts', () => {
@@ -70,7 +65,7 @@ describe('dolomite-liquidator', () => {
       const liquidations: any[] = [];
       const liquidatableExpiredAccounts: any[] = [];
       (AccountOperation as any).mockImplementation(() => ({
-        fullyLiquidateExpiredAccountV2: (...args) => {
+        fullyLiquidateExpiredAccount: (...args) => {
           liquidatableExpiredAccounts.push(args);
         },
         commit: () => {

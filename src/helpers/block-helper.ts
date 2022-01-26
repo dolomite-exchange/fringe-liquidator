@@ -6,30 +6,37 @@ import Logger from '../lib/logger';
 const subgraphUrl = process.env.SUBGRAPH_URL;
 
 let lastBlockTimestamp: DateTime = DateTime.fromSeconds(0);
+let lastBlockNumber: number = 0;
 
-export async function getBlockNumber(): Promise<number> {
-  return fetch(subgraphUrl, {
+export async function getBlockNumber(): Promise<{blockNumber: number, blockTimestamp: DateTime}> {
+  const gqlBlockNumber = await fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({
       query: '{ _meta { block { number } } }',
     }),
   })
     .then(response => response.json())
-    .then((json: any) => json.data._meta.block.number)
-    .catch(() => dolomite.web3.eth.getBlock('latest').then(block => block.number));
-}
+    .then((json: any) => Number(json.data._meta.block.number))
+    .catch(() => lastBlockNumber);
 
-export async function getLatestBlockTimestamp(): Promise<DateTime> {
+  let web3BlockNumber: number;
   try {
     const block = await dolomite.web3.eth.getBlock('latest');
+    web3BlockNumber = block.number;
     lastBlockTimestamp = DateTime.fromMillis(Number(block.timestamp) * 1000);
   } catch (error) {
+    web3BlockNumber = gqlBlockNumber;
     Logger.error({
-      at: 'block-helper#getLatestBlockTimestamp',
+      at: 'block-helper#getBlockNumber',
       message: error.message,
       error,
     });
   }
 
-  return lastBlockTimestamp;
+  if (gqlBlockNumber > web3BlockNumber) {
+    lastBlockNumber = web3BlockNumber;
+  } else {
+    lastBlockNumber = gqlBlockNumber;
+  }
+  return { blockNumber: lastBlockNumber, blockTimestamp: lastBlockTimestamp };
 }

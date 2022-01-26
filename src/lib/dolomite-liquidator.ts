@@ -10,7 +10,6 @@ import { delay } from './delay';
 import AccountStore from './account-store';
 import LiquidationStore from './liquidation-store';
 import MarketStore from './market-store';
-import { getLatestBlockTimestamp } from '../helpers/block-helper';
 import RiskParamsStore from './risk-params-store';
 import {
   ApiAccount,
@@ -56,7 +55,8 @@ export default class DolomiteLiquidator {
   }
 
   _liquidateAccounts = async () => {
-    const lastBlockTimestamp: DateTime = await getLatestBlockTimestamp();
+    const lastBlockTimestamp: DateTime = this.marketStore.getBlockTimestamp();
+    const blockNumber = this.marketStore.getBlockNumber();
 
     const expiredAccounts = this.accountStore.getExpirableDolomiteAccounts()
       .filter(a => !this.liquidationStore.contains(a))
@@ -73,7 +73,6 @@ export default class DolomiteLiquidator {
       return;
     }
 
-    const blockNumber = this.marketStore.getBlockNumber();
     const markets = this.marketStore.getDolomiteMarkets();
     const liquidatableAccounts = this.accountStore.getLiquidatableDolomiteAccounts()
       .filter(account => !this.liquidationStore.contains(account))

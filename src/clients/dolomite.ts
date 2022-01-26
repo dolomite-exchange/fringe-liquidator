@@ -18,10 +18,11 @@ import { dolomite } from '../helpers/web3';
 
 const subgraphUrl = process.env.SUBGRAPH_URL;
 
-async function getAccounts(marketIds: number[], query: string, blockNumber: number): Promise<{ accounts: ApiAccount[] }> {
-  // noinspection UnnecessaryLocalVariableJS
-  dolomite.web3.eth.defaultBlock = blockNumber
-
+async function getAccounts(
+  marketIds: number[],
+  query: string,
+  blockNumber: number,
+): Promise<{ accounts: ApiAccount[] }> {
   const marketIndexPromises = marketIds.map<Promise<MarketIndex>>(async marketId => {
     const {
       borrow,

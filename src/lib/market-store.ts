@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { ApiMarket } from './api-types';
 import { getDolomiteMarkets } from '../clients/dolomite';
 import { delay } from './delay';
@@ -7,8 +8,9 @@ import {
 } from '../helpers/block-helper';
 
 export default class MarketStore {
-  public blockNumber: number;
-  public dolomiteMarkets: ApiMarket[];
+  private blockNumber: number;
+  private blockTimestamp: DateTime;
+  private dolomiteMarkets: ApiMarket[];
 
   constructor() {
     this.blockNumber = 0;
@@ -17,6 +19,10 @@ export default class MarketStore {
 
   public getBlockNumber(): number {
     return this.blockNumber;
+  }
+
+  public getBlockTimestamp(): DateTime {
+    return this.blockTimestamp;
   }
 
   public getDolomiteMarkets(): ApiMarket[] {
@@ -54,10 +60,11 @@ export default class MarketStore {
       message: 'Updating markets...',
     });
 
-    const blockNumber = await getBlockNumber();
+    const { blockNumber, blockTimestamp } = await getBlockNumber();
     const { markets: nextDolomiteMarkets } = await getDolomiteMarkets(blockNumber);
 
     this.blockNumber = blockNumber;
+    this.blockTimestamp = blockTimestamp;
     this.dolomiteMarkets = nextDolomiteMarkets;
 
     Logger.info({

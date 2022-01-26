@@ -19,3 +19,5 @@ consoleScripts.js
 .coveralls.yml
 
 start-docker-test.sh
+
+output.log

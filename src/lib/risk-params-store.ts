@@ -52,7 +52,8 @@ export default class RiskParamsStore {
 
     let blockNumber = this.marketStore.getBlockNumber();
     if (blockNumber === 0) {
-      blockNumber = await getBlockNumber();
+      const { blockNumber: _blockNumber } = await getBlockNumber();
+      blockNumber = _blockNumber;
     }
 
     const { riskParams: nextDolomiteRiskParams } = await getDolomiteRiskParams(blockNumber);
