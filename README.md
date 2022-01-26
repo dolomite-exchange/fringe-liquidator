@@ -33,7 +33,7 @@ docker run \
   -e DOLOMITE_EXPIRATIONS_ENABLED=true|false \
   -e DOLOMITE_AUTO_SELL_COLLATERAL=true|false \
   -e DOLOMITE_BRIDGE_CURRENCY_ADDRESS=<WETH_ADDRESS> \
-  -e ETHEREUM_NODE_URL=https://polygon-mumbai.infura.io/v3/367998edbc0f428f97ef07db8695f113 \
+  -e ETHEREUM_NODE_URL=https://matic-mumbai.chainstacklabs.com \
   -e NETWORK_ID=80001 \
   dolomiteprotocol/liquidator
 ```
