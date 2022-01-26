@@ -400,6 +400,7 @@ function getTestMarkets(): ApiMarket[] {
 
 function getTestRiskParams(): ApiRiskParam {
   return {
+    dolomiteMargin: '0x0000000000000000000000000000000000000000',
     liquidationRatio: new BigNumber('1150000000000000000'), // 115% or 1.15
     liquidationReward: new BigNumber('1050000000000000000'), // 105% or 1.05
   };

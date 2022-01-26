@@ -1,4 +1,7 @@
-import { Integer } from '@dolomite-exchange/dolomite-margin';
+import {
+  address,
+  Integer,
+} from '@dolomite-exchange/dolomite-margin';
 
 export interface ApiBalance {
   marketId: number;
@@ -28,6 +31,7 @@ export interface ApiMarket {
 }
 
 export interface ApiRiskParam {
+  dolomiteMargin: address;
   liquidationRatio: Integer;
   liquidationReward: Integer;
 }

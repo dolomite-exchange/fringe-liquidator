@@ -2,6 +2,8 @@
 /* eslint import/first: 0 */
 import './lib/env';
 
+import { getDolomiteRiskParams } from './clients/dolomite';
+import { getBlockNumber } from './helpers/block-helper';
 import AccountStore from './lib/account-store';
 import MarketStore from './lib/market-store';
 import LiquidationStore from './lib/liquidation-store';
@@ -39,13 +41,26 @@ async function start() {
 
   await loadAccounts();
 
+  const { blockNumber } = await getBlockNumber();
+  const { riskParams } = await getDolomiteRiskParams(blockNumber);
+
+  const libraryDolomiteMargin = dolomite.contracts.dolomiteMargin.options.address
+  if (riskParams.dolomiteMargin !== libraryDolomiteMargin) {
+    const message = `Invalid dolomite margin address found!\n
+    { network: ${riskParams.dolomiteMargin} library: ${libraryDolomiteMargin} }`;
+    Logger.error(message);
+    console.error(message)
+    return Promise.reject(new Error(message));
+  }
+
   Logger.info({
-    message: 'DolomiteMargin addresses:',
-    dolomiteMargin: dolomite.contracts.dolomiteMargin.options.address,
+    message: 'DolomiteMargin data',
+    subgraphUrl: process.env.SUBGRAPH_URL,
+    dolomiteMargin: libraryDolomiteMargin,
     liquidatorProxyV1: dolomite.contracts.liquidatorProxyV1.options.address,
     liquidatorProxyV1WithAmm: dolomite.contracts.liquidatorProxyV1WithAmm.options.address,
     expiry: dolomite.contracts.expiry.options.address,
-  })
+  });
 
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED === 'true') {
     await initializeDolomiteLiquidations();
@@ -59,6 +74,13 @@ async function start() {
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED === 'true' || process.env.DOLOMITE_EXPIRATIONS_ENABLED === 'true') {
     dolomiteLiquidator.start();
   }
+  return true
 }
 
-start();
+start().catch(error => {
+  Logger.error({
+    message: `Found error while starting: ${error.toString()}`,
+    error: JSON.stringify(error),
+  })
+  process.exit(1)
+});

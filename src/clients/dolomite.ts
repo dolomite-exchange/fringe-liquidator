@@ -16,6 +16,9 @@ import {
 } from '../lib/api-types';
 import { dolomite } from '../helpers/web3';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ethers = require('ethers')
+
 const subgraphUrl = process.env.SUBGRAPH_URL;
 
 async function getAccounts(
@@ -194,6 +197,7 @@ export async function getDolomiteRiskParams(blockNumber: number): Promise<{ risk
     body: JSON.stringify({
       query: `query getDolomiteMargins($blockNumber: Int) {
         dolomiteMargins(block: { number: $blockNumber }) {
+          id
           liquidationRatio
           liquidationReward
         }
@@ -215,6 +219,7 @@ export async function getDolomiteRiskParams(blockNumber: number): Promise<{ risk
   // eslint-disable-next-line arrow-body-style
   const riskParams = (result.data.dolomiteMargins as GraphqlRiskParams[]).map<ApiRiskParam>(riskParam => {
     return {
+      dolomiteMargin: ethers.utils.getAddress(riskParam.id),
       liquidationRatio: new BigNumber(decimalToString(riskParam.liquidationRatio)),
       liquidationReward: new BigNumber(decimalToString(riskParam.liquidationReward)),
     }
