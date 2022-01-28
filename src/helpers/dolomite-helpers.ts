@@ -108,7 +108,7 @@ async function liquidateAccountInternal(
 
 export async function liquidateExpiredAccount(
   account: ApiAccount,
-  markets: ApiMarket[],
+  marketMap: { [marketId: string]: ApiMarket },
   lastBlockTimestamp: DateTime,
 ) {
   if (process.env.DOLOMITE_EXPIRATIONS_ENABLED.toLowerCase() !== 'true') {
@@ -127,7 +127,7 @@ export async function liquidateExpiredAccount(
   if (process.env.DOLOMITE_AUTO_SELL_COLLATERAL.toLowerCase() === 'true') {
     return liquidateAccountInternalAndSellCollateral(account, sender, lastBlockTimestamp, true);
   } else {
-    return liquidateExpiredAccountInternal(account, markets, sender, lastBlockTimestamp);
+    return liquidateExpiredAccountInternal(account, marketMap, sender, lastBlockTimestamp);
   }
 }
 
@@ -220,7 +220,7 @@ async function liquidateAccountInternalAndSellCollateral(
 
 async function liquidateExpiredAccountInternal(
   account: ApiAccount,
-  markets: ApiMarket[],
+  marketMap: { [marketId: string]: ApiMarket },
   sender: string,
   lastBlockTimestamp: DateTime,
 ) {
@@ -241,7 +241,8 @@ async function liquidateExpiredAccountInternal(
       weis.push(new BigNumber(balance.wei));
     }
 
-    const market = markets.find(m => m.id === i);
+    // TODO fix all of this to use mappings
+    const market = marketMap[i.toString()];
     if (!market) {
       throw new Error(`Could not find market with ID ${i}`);
     }

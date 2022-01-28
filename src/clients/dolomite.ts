@@ -173,8 +173,10 @@ export async function getDolomiteMarkets(blockNumber: number): Promise<{ markets
     .map<Promise<ApiMarket>>(async (market, i) => {
       const oraclePriceString = dolomite.web3.eth.abi.decodeParameter('uint256', marketPrices[i]);
 
+      const adj = market.id === '2' ? 2 : 0;
       return {
-        id: Number(market.id),
+        id: Number(market.id) - adj,
+        // id: Number(market.id),
         tokenAddress: market.token.id,
         oraclePrice: new BigNumber(oraclePriceString),
         marginPremium: new BigNumber(decimalToString(market.marginPremium)),

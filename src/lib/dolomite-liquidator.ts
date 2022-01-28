@@ -74,10 +74,10 @@ export default class DolomiteLiquidator {
       return;
     }
 
-    const markets = this.marketStore.getDolomiteMarkets();
+    const marketMap = this.marketStore.getMarketMap();
     const liquidatableAccounts = this.accountStore.getLiquidatableDolomiteAccounts()
       .filter(account => !this.liquidationStore.contains(account))
-      .filter(account => !this.isCollateralized(account, markets, riskParams));
+      .filter(account => !this.isCollateralized(account, marketMap, riskParams));
 
     if (liquidatableAccounts.length === 0 && expiredAccounts.length === 0) {
       Logger.info({
@@ -105,7 +105,7 @@ export default class DolomiteLiquidator {
       }),
       ...expiredAccounts.map(async (account) => {
         try {
-          await liquidateExpiredAccount(account, markets, lastBlockTimestamp);
+          await liquidateExpiredAccount(account, marketMap, lastBlockTimestamp);
         } catch (error) {
           Logger.error({
             at: 'DolomiteLiquidator#_liquidateAccounts',
@@ -118,7 +118,11 @@ export default class DolomiteLiquidator {
     ]);
   }
 
-  isCollateralized = (account: ApiAccount, markets: ApiMarket[], riskParams: ApiRiskParam): boolean => {
+  isCollateralized = (
+    account: ApiAccount,
+    marketMap: { [marketId: string]: ApiMarket },
+    riskParams: ApiRiskParam,
+  ): boolean => {
     const initial = {
       borrow: INTEGERS.ZERO,
       supply: INTEGERS.ZERO,
@@ -128,7 +132,7 @@ export default class DolomiteLiquidator {
       supply,
       borrow,
     } = Object.values(account.balances).reduce((memo, balance) => {
-      const market = markets[balance.marketId];
+      const market = marketMap[balance.marketId.toString()];
       const value = balance.wei.times(market.oraclePrice);
       const adjust = base.plus(market.marginPremium);
       if (balance.wei.lt(INTEGERS.ZERO)) {

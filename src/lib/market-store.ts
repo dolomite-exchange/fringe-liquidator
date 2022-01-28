@@ -10,11 +10,11 @@ import {
 export default class MarketStore {
   private blockNumber: number;
   private blockTimestamp: DateTime;
-  private dolomiteMarkets: ApiMarket[];
+  private marketMap: { [marketId: string]: ApiMarket };
 
   constructor() {
     this.blockNumber = 0;
-    this.dolomiteMarkets = [];
+    this.marketMap = {};
   }
 
   public getBlockNumber(): number {
@@ -25,8 +25,8 @@ export default class MarketStore {
     return this.blockTimestamp;
   }
 
-  public getDolomiteMarkets(): ApiMarket[] {
-    return this.dolomiteMarkets;
+  public getMarketMap(): { [marketId: string]: ApiMarket } {
+    return this.marketMap;
   }
 
   start = () => {
@@ -65,7 +65,10 @@ export default class MarketStore {
 
     this.blockNumber = blockNumber;
     this.blockTimestamp = blockTimestamp;
-    this.dolomiteMarkets = nextDolomiteMarkets;
+    this.marketMap = nextDolomiteMarkets.reduce<{ [marketId: string]: ApiMarket }>((memo, market) => {
+      memo[market.id.toString()] = market;
+      return memo;
+    }, {});
 
     Logger.info({
       at: 'MarketStore#_update',

@@ -51,7 +51,7 @@ describe('dolomite-liquidator', () => {
       accountStore.getExpirableDolomiteAccounts = jest.fn().mockImplementation(
         () => expiredAccounts,
       );
-      marketStore.getDolomiteMarkets = jest.fn().mockImplementation(
+      marketStore.getMarketMap = jest.fn().mockImplementation(
         () => markets,
       );
       riskParamsStore.getDolomiteRiskParams = jest.fn().mockImplementation(
@@ -152,7 +152,7 @@ describe('dolomite-liquidator', () => {
         .mockImplementation(
           () => expiredAccounts,
         );
-      marketStore.getDolomiteMarkets = jest.fn()
+      marketStore.getMarketMap = jest.fn()
         .mockImplementation(
           () => markets,
         );

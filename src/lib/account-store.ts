@@ -1,6 +1,6 @@
+import { BigNumber } from '@dolomite-exchange/dolomite-margin';
 import {
   ApiAccount,
-  ApiMarket,
   MarketIndex,
 } from './api-types';
 import {
@@ -11,7 +11,6 @@ import { delay } from './delay';
 import Logger from './logger';
 import MarketStore from './market-store';
 import { dolomite } from '../helpers/web3';
-import { BigNumber } from '@dolomite-exchange/dolomite-margin';
 
 export default class AccountStore {
   public marketStore: MarketStore
@@ -75,8 +74,8 @@ export default class AccountStore {
       return;
     }
 
-    const markets = this.marketStore.getDolomiteMarkets();
-    const marketIndexMap = await this.getMarketIndexMap(markets, blockNumber);
+    const marketMap = this.marketStore.getMarketMap();
+    const marketIndexMap = await this.getMarketIndexMap(marketMap, blockNumber);
 
     const [
       { accounts: nextLiquidatableDolomiteAccounts },
@@ -101,13 +100,14 @@ export default class AccountStore {
   };
 
   private async getMarketIndexMap(
-    markets: ApiMarket[],
+    marketMap: { [marketId: string]: any },
     blockNumber: number,
   ): Promise<{ [marketId: string]: MarketIndex }> {
-    const indexCalls = markets.map(market => {
+    const marketIds = Object.keys(marketMap);
+    const indexCalls = marketIds.map(marketId => {
       return {
         target: dolomite.contracts.dolomiteMargin.options.address,
-        callData: dolomite.contracts.dolomiteMargin.methods.getMarketCurrentIndex(market.id.toString()).encodeABI(),
+        callData: dolomite.contracts.dolomiteMargin.methods.getMarketCurrentIndex(marketId).encodeABI(),
       };
     });
 
@@ -115,8 +115,8 @@ export default class AccountStore {
 
     return indexResults.reduce<{ [marketId: string]: MarketIndex }>((memo, rawIndexResult, i) => {
       const decodedResults = dolomite.web3.eth.abi.decodeParameters(['uint256', 'uint256', 'uint256'], rawIndexResult);
-      memo[markets[i].id.toString()] = {
-        marketId: markets[i].id,
+      memo[marketIds[i]] = {
+        marketId: Number(marketIds[i]),
         borrow: new BigNumber(decodedResults[0]).div('1000000000000000000'),
         supply: new BigNumber(decodedResults[1]).div('1000000000000000000'),
       }
