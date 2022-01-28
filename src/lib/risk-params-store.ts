@@ -3,7 +3,6 @@ import { getDolomiteRiskParams } from '../clients/dolomite';
 import { delay } from './delay';
 import Logger from './logger';
 import MarketStore from './market-store';
-import { getBlockNumber } from '../helpers/block-helper';
 
 export default class RiskParamsStore {
   public marketStore: MarketStore
@@ -28,6 +27,8 @@ export default class RiskParamsStore {
   };
 
   _poll = async () => {
+    await delay(Number(process.env.MARKET_POLL_INTERVAL_MS)); // wait for the markets to initialize
+
     // noinspection InfiniteLoopJS
     for (; ;) {
       try {
@@ -50,10 +51,13 @@ export default class RiskParamsStore {
       message: 'Updating risk params...',
     });
 
-    let blockNumber = this.marketStore.getBlockNumber();
+    const blockNumber = this.marketStore.getBlockNumber();
     if (blockNumber === 0) {
-      const { blockNumber: _blockNumber } = await getBlockNumber();
-      blockNumber = _blockNumber;
+      Logger.warn({
+        at: 'RiskParamsStore#_update',
+        message: 'Block number from marketStore is 0, returning...',
+      });
+      return;
     }
 
     const { riskParams: nextDolomiteRiskParams } = await getDolomiteRiskParams(blockNumber);

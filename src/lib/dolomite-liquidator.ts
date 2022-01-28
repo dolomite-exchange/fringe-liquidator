@@ -46,6 +46,7 @@ export default class DolomiteLiquidator {
   }
 
   _poll = async () => {
+    await delay(Number(process.env.MARKET_POLL_INTERVAL_MS)); // wait for the markets to initialize
     // noinspection InfiniteLoopJS
     for (; ;) {
       await this._liquidateAccounts();

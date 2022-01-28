@@ -3,7 +3,7 @@
 import './lib/env';
 
 import { getDolomiteRiskParams } from './clients/dolomite';
-import { getBlockNumber } from './helpers/block-helper';
+import { getSubgraphBlockNumber } from './helpers/block-helper';
 import AccountStore from './lib/account-store';
 import MarketStore from './lib/market-store';
 import LiquidationStore from './lib/liquidation-store';
@@ -41,7 +41,7 @@ async function start() {
 
   await loadAccounts();
 
-  const { blockNumber } = await getBlockNumber();
+  const { blockNumber } = await getSubgraphBlockNumber();
   const { riskParams } = await getDolomiteRiskParams(blockNumber);
 
   const libraryDolomiteMargin = dolomite.contracts.dolomiteMargin.options.address

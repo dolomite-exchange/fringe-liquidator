@@ -8,7 +8,7 @@ const subgraphUrl = process.env.SUBGRAPH_URL;
 let lastBlockTimestamp: DateTime = DateTime.fromSeconds(0);
 let lastBlockNumber: number = 0;
 
-export async function getBlockNumber(): Promise<{blockNumber: number, blockTimestamp: DateTime}> {
+export async function getSubgraphBlockNumber(): Promise<{blockNumber: number, blockTimestamp: DateTime}> {
   const gqlBlockNumber = await fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({

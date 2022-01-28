@@ -1,11 +1,17 @@
-import { ApiAccount } from './api-types';
 import {
-  getLiquidatableDolomiteAccounts,
+  ApiAccount,
+  ApiMarket,
+  MarketIndex,
+} from './api-types';
+import {
   getExpiredAccounts,
+  getLiquidatableDolomiteAccounts,
 } from '../clients/dolomite';
 import { delay } from './delay';
 import Logger from './logger';
 import MarketStore from './market-store';
+import { dolomite } from '../helpers/web3';
+import { BigNumber } from '@dolomite-exchange/dolomite-margin';
 
 export default class AccountStore {
   public marketStore: MarketStore
@@ -36,8 +42,10 @@ export default class AccountStore {
   };
 
   _poll = async () => {
+    await delay(Number(process.env.MARKET_POLL_INTERVAL_MS)); // wait for the markets to initialize
+
     // noinspection InfiniteLoopJS
-    for (;;) {
+    for (; ;) {
       try {
         await this._update();
       } catch (error) {
@@ -59,15 +67,23 @@ export default class AccountStore {
     });
 
     const blockNumber = this.marketStore.getBlockNumber();
+    if (blockNumber === 0) {
+      Logger.warn({
+        at: 'AccountStore#_update',
+        message: 'Block number from marketStore is 0, returning...',
+      });
+      return;
+    }
+
     const markets = this.marketStore.getDolomiteMarkets();
-    const marketIds = markets.map(market => market.id);
+    const marketIndexMap = await this.getMarketIndexMap(markets, blockNumber);
 
     const [
       { accounts: nextLiquidatableDolomiteAccounts },
       { accounts: nextExpiredAccounts },
     ] = await Promise.all([
-      getLiquidatableDolomiteAccounts(marketIds, blockNumber),
-      getExpiredAccounts(marketIds, blockNumber),
+      getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber),
+      getExpiredAccounts(marketIndexMap, blockNumber),
     ]);
 
     // Do not put an account in both liquidatable and expired
@@ -83,4 +99,28 @@ export default class AccountStore {
       message: 'Finished updating accounts',
     });
   };
+
+  private async getMarketIndexMap(
+    markets: ApiMarket[],
+    blockNumber: number,
+  ): Promise<{ [marketId: string]: MarketIndex }> {
+    const indexCalls = markets.map(market => {
+      return {
+        target: dolomite.contracts.dolomiteMargin.options.address,
+        callData: dolomite.contracts.dolomiteMargin.methods.getMarketCurrentIndex(market.id.toString()).encodeABI(),
+      };
+    });
+
+    const { results: indexResults } = await dolomite.multiCall.aggregate(indexCalls, { blockNumber });
+
+    return indexResults.reduce<{ [marketId: string]: MarketIndex }>((memo, rawIndexResult, i) => {
+      const decodedResults = dolomite.web3.eth.abi.decodeParameters(['uint256', 'uint256', 'uint256'], rawIndexResult);
+      memo[markets[i].id.toString()] = {
+        marketId: markets[i].id,
+        borrow: new BigNumber(decodedResults[0]).div('1000000000000000000'),
+        supply: new BigNumber(decodedResults[1]).div('1000000000000000000'),
+      }
+      return memo
+    }, {})
+  }
 }

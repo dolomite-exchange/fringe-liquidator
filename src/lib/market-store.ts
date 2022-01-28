@@ -4,7 +4,7 @@ import { getDolomiteMarkets } from '../clients/dolomite';
 import { delay } from './delay';
 import Logger from './logger';
 import {
-  getBlockNumber,
+  getSubgraphBlockNumber,
 } from '../helpers/block-helper';
 
 export default class MarketStore {
@@ -60,7 +60,7 @@ export default class MarketStore {
       message: 'Updating markets...',
     });
 
-    const { blockNumber, blockTimestamp } = await getBlockNumber();
+    const { blockNumber, blockTimestamp } = await getSubgraphBlockNumber();
     const { markets: nextDolomiteMarkets } = await getDolomiteMarkets(blockNumber);
 
     this.blockNumber = blockNumber;
