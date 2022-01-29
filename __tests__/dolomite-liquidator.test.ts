@@ -36,7 +36,7 @@ describe('dolomite-liquidator', () => {
   });
 
   describe('#_liquidateAccounts', () => {
-    it('Successfully liquidates accounts without selling collateral', async () => {
+    it('Successfully liquidates accounts normally', async () => {
       process.env.DOLOMITE_EXPIRATIONS_ENABLED = 'true';
       process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS = getTestMarkets()[0].tokenAddress;
       process.env.DOLOMITE_AUTO_SELL_COLLATERAL = 'false';

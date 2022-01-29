@@ -1,5 +1,6 @@
 import {
   BigNumber,
+  Integer,
   INTEGERS,
 } from '@dolomite-exchange/dolomite-margin';
 import {
@@ -15,9 +16,9 @@ import { getGasPrice } from '../lib/gas-price';
 import Logger from '../lib/logger';
 import { dolomite } from './web3';
 
-const collateralPreferences = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
+const collateralPreferences: string[] = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
   .map((pref) => pref.trim());
-const owedPreferences = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
+const owedPreferences: string[] = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
   .map((pref) => pref.trim());
 
 export async function liquidateAccount(
@@ -26,7 +27,7 @@ export async function liquidateAccount(
   blockNumber: number,
 ): Promise<TxResult | undefined> {
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED !== 'true') {
-    return Promise.resolve(undefined);
+    return undefined;
   }
 
   Logger.info({
@@ -50,7 +51,7 @@ export async function liquidateAccount(
       accountNumber: liquidAccount.number,
     });
 
-    return Promise.resolve(undefined);
+    return undefined;
   }
 
   const sender = process.env.WALLET_ADDRESS;
@@ -227,28 +228,28 @@ async function liquidateExpiredAccountInternal(
   const expiredMarkets: string[] = [];
   const operation = dolomite.operation.initiate();
 
-  const weis: BigNumber[] = [];
-  const prices: BigNumber[] = [];
-  const liquidationRewardPremiums: BigNumber[] = [];
+  const weis: { [marketId: string]: Integer } = {};
+  const prices: { [marketId: string]: Integer } = {};
+  const liquidationRewardPremiums: { [marketId: string]: Integer } = {};
   const collateralPreferencesBN = collateralPreferences.map((p) => new BigNumber(p));
 
   for (let i = 0; i < collateralPreferences.length; i += 1) {
-    const balance = account.balances[i];
+    const marketId = collateralPreferences[i];
+    const balance = account.balances[marketId];
 
     if (!balance) {
-      weis.push(INTEGERS.ZERO);
+      weis[marketId] = INTEGERS.ZERO;
     } else {
-      weis.push(new BigNumber(balance.wei));
+      weis[marketId] = new BigNumber(balance.wei);
     }
 
-    // TODO fix all of this to use mappings
-    const market = marketMap[i.toString()];
+    const market = marketMap[marketId];
     if (!market) {
-      throw new Error(`Could not find market with ID ${i}`);
+      throw new Error(`Could not find API market with ID ${marketId}`);
     }
 
-    prices.push(new BigNumber(market.oraclePrice));
-    liquidationRewardPremiums.push(new BigNumber(market.liquidationRewardPremium));
+    prices[marketId] = market.oraclePrice;
+    liquidationRewardPremiums[marketId] = market.liquidationRewardPremium;
   }
 
   Object.keys(account.balances)
