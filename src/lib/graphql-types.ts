@@ -1,3 +1,9 @@
+export interface GraphqlAccountResult {
+  data: {
+    marginAccounts: GraphqlAccount[]
+  }
+}
+
 export interface GraphqlTokenValue {
   token: {
     id: string
@@ -17,6 +23,12 @@ export interface GraphqlAccount {
   tokenValues: GraphqlTokenValue[]
 }
 
+export interface GraphqlMarketResult {
+  data: {
+    marketRiskInfos: GraphqlMarket[]
+  }
+}
+
 export interface GraphqlMarket {
   id: string
   token: {
@@ -27,8 +39,15 @@ export interface GraphqlMarket {
   liquidationRewardPremium: string
 }
 
+export interface GraphqlRiskParamsResult {
+  data: {
+    dolomiteMargins: GraphqlRiskParams[]
+  }
+}
+
 export interface GraphqlRiskParams {
   id: string
   liquidationRatio: string
   liquidationReward: string
 }
+

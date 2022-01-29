@@ -1,19 +1,19 @@
 import { BigNumber } from '@dolomite-exchange/dolomite-margin';
 import {
-  ApiAccount,
-  MarketIndex,
-} from './api-types';
-import {
   getExpiredAccounts,
   getLiquidatableDolomiteAccounts,
 } from '../clients/dolomite';
+import { dolomite } from '../helpers/web3';
+import {
+  ApiAccount,
+  MarketIndex,
+} from './api-types';
 import { delay } from './delay';
 import Logger from './logger';
 import MarketStore from './market-store';
-import { dolomite } from '../helpers/web3';
 
 export default class AccountStore {
-  public marketStore: MarketStore
+  public marketStore: MarketStore;
 
   public liquidatableDolomiteAccounts: ApiAccount[];
   public expiredAccounts: ApiAccount[];
@@ -77,13 +77,25 @@ export default class AccountStore {
     const marketMap = this.marketStore.getMarketMap();
     const marketIndexMap = await this.getMarketIndexMap(marketMap, blockNumber);
 
-    const [
-      { accounts: nextLiquidatableDolomiteAccounts },
-      { accounts: nextExpiredAccounts },
-    ] = await Promise.all([
-      getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber),
-      getExpiredAccounts(marketIndexMap, blockNumber),
-    ]);
+    let nextLiquidatableDolomiteAccounts: ApiAccount[] = [];
+    let nextExpiredAccounts: ApiAccount[] = [];
+
+    let queryResultLiquidatableDolomiteAccounts: ApiAccount[];
+    let queryResultExpiredAccounts: ApiAccount[];
+    do {
+      const [
+        { accounts: liquidatableDolomiteAccounts },
+        { accounts: expirableAccounts },
+      ] = await Promise.all([
+        getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber),
+        getExpiredAccounts(marketIndexMap, blockNumber),
+      ]);
+      nextLiquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts.concat(liquidatableDolomiteAccounts)
+      nextExpiredAccounts = nextExpiredAccounts.concat(expirableAccounts)
+
+      queryResultLiquidatableDolomiteAccounts = liquidatableDolomiteAccounts;
+      queryResultExpiredAccounts = expirableAccounts;
+    } while (queryResultLiquidatableDolomiteAccounts.length !== 0 && queryResultExpiredAccounts.length !== 0);
 
     // Do not put an account in both liquidatable and expired
     const filteredNextExpiredAccounts = nextExpiredAccounts.filter(
@@ -107,7 +119,8 @@ export default class AccountStore {
     const indexCalls = marketIds.map(marketId => {
       return {
         target: dolomite.contracts.dolomiteMargin.options.address,
-        callData: dolomite.contracts.dolomiteMargin.methods.getMarketCurrentIndex(marketId).encodeABI(),
+        callData: dolomite.contracts.dolomiteMargin.methods.getMarketCurrentIndex(marketId)
+          .encodeABI(),
       };
     });
 
@@ -119,8 +132,8 @@ export default class AccountStore {
         marketId: Number(marketIds[i]),
         borrow: new BigNumber(decodedResults[0]).div('1000000000000000000'),
         supply: new BigNumber(decodedResults[1]).div('1000000000000000000'),
-      }
-      return memo
-    }, {})
+      };
+      return memo;
+    }, {});
   }
 }

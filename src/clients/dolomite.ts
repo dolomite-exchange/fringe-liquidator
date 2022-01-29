@@ -1,15 +1,11 @@
 /* eslint-disable max-len */
-import fetch from 'node-fetch';
 import {
   BigNumber,
   Decimal,
 } from '@dolomite-exchange/dolomite-margin';
 import { decimalToString } from '@dolomite-exchange/dolomite-margin/dist/src/lib/Helpers';
-import {
-  GraphqlAccount,
-  GraphqlMarket,
-  GraphqlRiskParams,
-} from '../lib/graphql-types';
+import fetch from 'node-fetch';
+import { dolomite } from '../helpers/web3';
 import {
   ApiAccount,
   ApiBalance,
@@ -17,10 +13,14 @@ import {
   ApiRiskParam,
   MarketIndex,
 } from '../lib/api-types';
-import { dolomite } from '../helpers/web3';
+import {
+  GraphqlAccountResult,
+  GraphqlMarketResult,
+  GraphqlRiskParamsResult,
+} from '../lib/graphql-types';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const ethers = require('ethers')
+const ethers = require('ethers');
 
 const subgraphUrl = process.env.SUBGRAPH_URL;
 
@@ -28,14 +28,16 @@ async function getAccounts(
   marketIndexMap: { [marketId: string]: { borrow: Decimal, supply: Decimal } },
   query: string,
   blockNumber: number,
+  pageIndex: number = 0,
 ): Promise<{ accounts: ApiAccount[] }> {
   const decimalBase = new BigNumber('1000000000000000000');
-  const accounts: any = await fetch(subgraphUrl, {
+  const accounts: ApiAccount[] = await fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({
       query,
       variables: {
         blockNumber,
+        skip: 1000 * pageIndex,
       },
     }),
     headers: {
@@ -45,46 +47,49 @@ async function getAccounts(
     .then(response => response.json())
     .then((response: any) => {
       if (response.errors && typeof response.errors === 'object') {
-        return Promise.reject(response.errors[0]);
+        return Promise.reject((response.errors as any)[0]);
       } else {
-        return response.data.marginAccounts as GraphqlAccount[];
+        return (response as GraphqlAccountResult).data.marginAccounts;
       }
     })
     .then(graphqlAccounts => graphqlAccounts.map<ApiAccount>(account => {
       const balances = account.tokenValues.reduce<{ [marketNumber: string]: ApiBalance }>((memo, value) => {
-        const tokenBase = new BigNumber('10').pow(value.token.decimals)
-        const valuePar = new BigNumber(value.valuePar).times(tokenBase)
-        const indexObject = marketIndexMap[value.token.marketId]
-        const index = (new BigNumber(valuePar).lt('0') ? indexObject.borrow : indexObject.supply).times(decimalBase)
+        const tokenBase = new BigNumber('10').pow(value.token.decimals);
+        const valuePar = new BigNumber(value.valuePar).times(tokenBase);
+        const indexObject = marketIndexMap[value.token.marketId];
+        const index = (new BigNumber(valuePar).lt('0') ? indexObject.borrow : indexObject.supply).times(decimalBase);
         memo[value.token.marketId] = {
           marketId: Number(value.token.marketId),
           tokenSymbol: value.token.symbol,
           tokenAddress: value.token.id,
           par: valuePar,
-          wei: new BigNumber(valuePar).times(index).div(decimalBase).integerValue(BigNumber.ROUND_HALF_UP),
+          wei: new BigNumber(valuePar).times(index)
+            .div(decimalBase)
+            .integerValue(BigNumber.ROUND_HALF_UP),
           expiresAt: value.expirationTimestamp ? new BigNumber(value.expirationTimestamp) : null,
           expiryAddress: value.expiryAddress,
-        }
-        return memo
-      }, {})
+        };
+        return memo;
+      }, {});
       return {
         id: `${account.user}-${account.accountNumber}`,
         owner: account.user,
         number: new BigNumber(account.accountNumber),
         balances,
-      }
+      };
     }));
 
-  return { accounts: accounts as ApiAccount[] };
+  return { accounts };
 }
 
 export async function getLiquidatableDolomiteAccounts(
   marketIndexMap: { [marketId: string]: MarketIndex },
   blockNumber: number,
+  pageIndex: number = 0,
 ): Promise<{ accounts: ApiAccount[] }> {
   const query = `
             query getActiveMarginAccounts($blockNumber: Int) {
-                marginAccounts(where: { hasBorrowedValue: true }, block: { number: $blockNumber }) {
+                marginAccounts(where: { hasBorrowValue: true } block: { number: $blockNumber } first: 1000 skip: $skip) {
                   id
                   user
                   accountNumber
@@ -101,16 +106,17 @@ export async function getLiquidatableDolomiteAccounts(
                   }
                 }
               }`;
-  return getAccounts(marketIndexMap, query, blockNumber);
+  return getAccounts(marketIndexMap, query, blockNumber, pageIndex);
 }
 
 export async function getExpiredAccounts(
   marketIndexMap: { [marketId: string]: MarketIndex },
-  blockNumber,
+  blockNumber: number,
+  pageIndex: number = 0,
 ): Promise<{ accounts: ApiAccount[] }> {
   const query = `
-            query getActiveMarginAccounts($blockNumber: Int) {
-                marginAccounts(where: { hasBorrowedValue: true, hasExpiration: true }, block: { number: $blockNumber }) {
+            query getActiveMarginAccounts($blockNumber: Int, $skip: Int) {
+                marginAccounts(where: { hasBorrowValue: true hasExpiration: true } block: { number: $blockNumber } first: 1000 skip: $skip) {
                   id
                   user
                   accountNumber
@@ -126,15 +132,18 @@ export async function getExpiredAccounts(
                   }
                 }
               }`;
-  return getAccounts(marketIndexMap, query, blockNumber);
+  return getAccounts(marketIndexMap, query, blockNumber, pageIndex);
 }
 
-export async function getDolomiteMarkets(blockNumber: number): Promise<{ markets: ApiMarket[] }> {
+export async function getDolomiteMarkets(
+  blockNumber: number,
+  pageIndex: number = 0,
+): Promise<{ markets: ApiMarket[] }> {
   const result: any = await fetch(subgraphUrl, {
     method: 'POST',
     body: JSON.stringify({
-      query: `query getMarketRiskInfos($blockNumber: Int) {
-                marketRiskInfos(orderBy: id, block: { number: $blockNumber }) {
+      query: `query getMarketRiskInfos($blockNumber: Int, $skip: Int) {
+                marketRiskInfos(orderBy: id block: { number: $blockNumber } first: 1000 skip: $skip) {
                   id
                   token {
                     marketId
@@ -147,42 +156,42 @@ export async function getDolomiteMarkets(blockNumber: number): Promise<{ markets
               }`,
       variables: {
         blockNumber,
+        skip: pageIndex * 1000,
       },
     }),
     headers: {
       'content-type': 'application/json',
     },
-  }).then(response => response.json());
+  })
+    .then(response => response.json())
+    .then(json => json as GraphqlMarketResult);
 
   if (result.errors && typeof result.errors === 'object') {
     // noinspection JSPotentiallyInvalidTargetOfIndexedPropertyAccess
     return Promise.reject(result.errors[0]);
   }
 
-  const calls = (result.data.marketRiskInfos as GraphqlMarket[]).map(market => {
+  const calls = result.data.marketRiskInfos.map(market => {
     return {
-      target: dolomite.contracts.dolomiteMargin.options.address,
-      callData: dolomite.contracts.dolomiteMargin.methods.getMarketPrice(market.id).encodeABI(),
+      target: (dolomite.contracts.dolomiteMargin.options as any).address,
+      callData: dolomite.contracts.dolomiteMargin.methods.getMarketPrice(market.id)
+        .encodeABI(),
     };
   });
 
   const { results: marketPrices } = await dolomite.multiCall.aggregate(calls, { blockNumber });
 
-  /* eslint-disable */
-  const markets = (result.data.marketRiskInfos as GraphqlMarket[])
-    .map<Promise<ApiMarket>>(async (market, i) => {
-      const oraclePriceString = dolomite.web3.eth.abi.decodeParameter('uint256', marketPrices[i]);
-
-      return {
-        id: Number(market.id),
-        // id: Number(market.id),
-        tokenAddress: market.token.id,
-        oraclePrice: new BigNumber(oraclePriceString),
-        marginPremium: new BigNumber(decimalToString(market.marginPremium)),
-        liquidationRewardPremium: new BigNumber(decimalToString(market.liquidationRewardPremium)),
-      };
-    });
-  /* eslint-enable */
+  const markets: Promise<ApiMarket>[] = result.data.marketRiskInfos.map(async (market, i) => {
+    const oraclePriceString = dolomite.web3.eth.abi.decodeParameter('uint256', marketPrices[i]);
+    const apiMarket: ApiMarket = {
+      id: Number(market.id),
+      tokenAddress: market.token.id,
+      oraclePrice: new BigNumber(oraclePriceString),
+      marginPremium: new BigNumber(decimalToString(market.marginPremium)),
+      liquidationRewardPremium: new BigNumber(decimalToString(market.liquidationRewardPremium)),
+    };
+    return apiMarket;
+  });
 
   return { markets: await Promise.all(markets) };
 }
@@ -205,21 +214,22 @@ export async function getDolomiteRiskParams(blockNumber: number): Promise<{ risk
     headers: {
       'content-type': 'application/json',
     },
-  }).then(response => response.json());
+  })
+    .then(response => response.json())
+    .then(json => json as GraphqlRiskParamsResult);
 
   if (result.errors && typeof result.errors === 'object') {
     // noinspection JSPotentiallyInvalidTargetOfIndexedPropertyAccess
     return Promise.reject(result.errors[0]);
   }
 
-  // eslint-disable-next-line arrow-body-style
-  const riskParams = (result.data.dolomiteMargins as GraphqlRiskParams[]).map<ApiRiskParam>(riskParam => {
+  const riskParams: ApiRiskParam[] = result.data.dolomiteMargins.map(riskParam => {
     return {
       dolomiteMargin: ethers.utils.getAddress(riskParam.id),
       liquidationRatio: new BigNumber(decimalToString(riskParam.liquidationRatio)),
       liquidationReward: new BigNumber(decimalToString(riskParam.liquidationReward)),
-    }
-  })
+    };
+  });
 
   return { riskParams: riskParams[0] };
 }
