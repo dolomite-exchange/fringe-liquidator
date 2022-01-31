@@ -61,7 +61,16 @@ export default class MarketStore {
     });
 
     const { blockNumber, blockTimestamp } = await getSubgraphBlockNumber();
-    const { markets: nextDolomiteMarkets } = await getDolomiteMarkets(blockNumber);
+
+    let nextDolomiteMarkets: ApiMarket[] = [];
+    let queryDolomiteMarkets: ApiMarket[] = [];
+    let pageIndex = 0;
+    do {
+      const { markets } = await getDolomiteMarkets(blockNumber, pageIndex);
+      nextDolomiteMarkets = nextDolomiteMarkets.concat(markets);
+      queryDolomiteMarkets = markets;
+      pageIndex += 1;
+    } while (queryDolomiteMarkets.length !== 0)
 
     this.blockNumber = blockNumber;
     this.blockTimestamp = blockTimestamp;

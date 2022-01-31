@@ -16,12 +16,12 @@ export default class AccountStore {
   public marketStore: MarketStore;
 
   public liquidatableDolomiteAccounts: ApiAccount[];
-  public expiredAccounts: ApiAccount[];
+  public expirableAccounts: ApiAccount[];
 
   constructor(marketStore: MarketStore) {
     this.marketStore = marketStore;
     this.liquidatableDolomiteAccounts = [];
-    this.expiredAccounts = [];
+    this.expirableAccounts = [];
   }
 
   public getLiquidatableDolomiteAccounts(): ApiAccount[] {
@@ -29,7 +29,7 @@ export default class AccountStore {
   }
 
   public getExpirableDolomiteAccounts(): ApiAccount[] {
-    return this.expiredAccounts;
+    return this.expirableAccounts;
   }
 
   start = () => {
@@ -78,32 +78,29 @@ export default class AccountStore {
     const marketIndexMap = await this.getMarketIndexMap(marketMap, blockNumber);
 
     let nextLiquidatableDolomiteAccounts: ApiAccount[] = [];
-    let nextExpiredAccounts: ApiAccount[] = [];
+    let nextExpirableAccounts: ApiAccount[] = [];
 
     let queryResultLiquidatableDolomiteAccounts: ApiAccount[];
     let queryResultExpiredAccounts: ApiAccount[];
+    let pageIndex = 0;
     do {
       const [
         { accounts: liquidatableDolomiteAccounts },
         { accounts: expirableAccounts },
       ] = await Promise.all([
-        getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber),
-        getExpiredAccounts(marketIndexMap, blockNumber),
+        getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber, pageIndex),
+        getExpiredAccounts(marketIndexMap, blockNumber, pageIndex),
       ]);
-      nextLiquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts.concat(liquidatableDolomiteAccounts)
-      nextExpiredAccounts = nextExpiredAccounts.concat(expirableAccounts)
+      nextLiquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts.concat(liquidatableDolomiteAccounts);
+      nextExpirableAccounts = nextExpirableAccounts.concat(expirableAccounts);
 
       queryResultLiquidatableDolomiteAccounts = liquidatableDolomiteAccounts;
       queryResultExpiredAccounts = expirableAccounts;
+      pageIndex += 1;
     } while (queryResultLiquidatableDolomiteAccounts.length !== 0 && queryResultExpiredAccounts.length !== 0);
 
-    // Do not put an account in both liquidatable and expired
-    const filteredNextExpiredAccounts = nextExpiredAccounts.filter(
-      (ea) => !nextLiquidatableDolomiteAccounts.find((la) => la.id === ea.id),
-    );
-
     this.liquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts;
-    this.expiredAccounts = filteredNextExpiredAccounts;
+    this.expirableAccounts = nextExpirableAccounts;
 
     Logger.info({
       at: 'AccountStore#_update',

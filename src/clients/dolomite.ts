@@ -122,6 +122,7 @@ export async function getExpiredAccounts(
                   accountNumber
                   tokenValues {
                     token {
+                      id
                       marketId
                       symbol
                       decimals
@@ -143,8 +144,7 @@ export async function getDolomiteMarkets(
     method: 'POST',
     body: JSON.stringify({
       query: `query getMarketRiskInfos($blockNumber: Int, $skip: Int) {
-                marketRiskInfos(orderBy: id block: { number: $blockNumber } first: 1000 skip: $skip) {
-                  id
+                marketRiskInfos(block: { number: $blockNumber } first: 1000 skip: $skip) {
                   token {
                     marketId
                     symbol
@@ -174,7 +174,7 @@ export async function getDolomiteMarkets(
   const calls = result.data.marketRiskInfos.map(market => {
     return {
       target: (dolomite.contracts.dolomiteMargin.options as any).address,
-      callData: dolomite.contracts.dolomiteMargin.methods.getMarketPrice(market.id)
+      callData: dolomite.contracts.dolomiteMargin.methods.getMarketPrice(market.token.marketId)
         .encodeABI(),
     };
   });
@@ -184,7 +184,7 @@ export async function getDolomiteMarkets(
   const markets: Promise<ApiMarket>[] = result.data.marketRiskInfos.map(async (market, i) => {
     const oraclePriceString = dolomite.web3.eth.abi.decodeParameter('uint256', marketPrices[i]);
     const apiMarket: ApiMarket = {
-      id: Number(market.id),
+      id: Number(market.token.marketId),
       tokenAddress: market.token.id,
       oraclePrice: new BigNumber(oraclePriceString),
       marginPremium: new BigNumber(decimalToString(market.marginPremium)),

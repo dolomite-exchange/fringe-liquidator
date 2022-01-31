@@ -34,6 +34,7 @@ export interface GraphqlMarket {
   token: {
     id: string
     decimals: string
+    marketId: string
   }
   marginPremium: string
   liquidationRewardPremium: string

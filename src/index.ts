@@ -60,6 +60,7 @@ async function start() {
     liquidatorProxyV1: dolomite.contracts.liquidatorProxyV1.options.address,
     liquidatorProxyV1WithAmm: dolomite.contracts.liquidatorProxyV1WithAmm.options.address,
     expiry: dolomite.contracts.expiry.options.address,
+    rampTime: process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS,
   });
 
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED === 'true') {

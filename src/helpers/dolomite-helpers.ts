@@ -21,6 +21,14 @@ const collateralPreferences: string[] = process.env.DOLOMITE_COLLATERAL_PREFEREN
 const owedPreferences: string[] = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
   .map((pref) => pref.trim());
 
+export function isExpired(
+  expiresAt: Integer | null,
+  latestBlockTimestamp: DateTime,
+): boolean {
+  let expiresAtPlusDelay = expiresAt?.plus(process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS);
+  return expiresAtPlusDelay?.lt(latestBlockTimestamp.toSeconds()) ?? false;
+}
+
 export async function liquidateAccount(
   liquidAccount: ApiAccount,
   lastBlockTimestamp: DateTime,
@@ -165,17 +173,17 @@ async function liquidateAccountInternalAndSellCollateral(
 
   const bridgeAddress = process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS.toLowerCase();
   const owedBalance = Object.values(liquidAccount.balances)
-    .filter(value => {
+    .filter(balance => {
       if (isExpiring) {
         // Return any market that has expired and is borrowed (negative)
-        const lastBlockTimestampBN = new BigNumber(Math.floor(lastBlockTimestamp.toMillis() / 1000));
-        return value.expiresAt?.lt(lastBlockTimestampBN) && new BigNumber(value.wei).lt('0');
+        return isExpired(balance.expiresAt, lastBlockTimestamp) && balance.wei.lt('0');
       } else {
-        return new BigNumber(value.wei).lt('0');
+        return balance.wei.lt('0');
       }
     })[0];
   const heldBalance = Object.values(liquidAccount.balances)
-    .filter(value => new BigNumber(value.wei).gt('0'))[0];
+    .filter(value => value.wei.gt('0'))
+    [0];
   const gasPrice = getGasPrice();
 
   const owedToken = owedBalance.tokenAddress.toLowerCase();
@@ -190,7 +198,7 @@ async function liquidateAccountInternalAndSellCollateral(
 
   const minOwedOutputDiscount = new BigNumber(process.env.DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT);
   if (minOwedOutputDiscount.gte(INTEGERS.ONE)) {
-    return Promise.reject(new Error('DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be less than 1.00'))
+    return Promise.reject(new Error('DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be less than 1.00'));
   } else if (minOwedOutputDiscount.lt(INTEGERS.ZERO)) {
     return Promise.reject(new Error('DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be greater than or equal to 0'));
   }
