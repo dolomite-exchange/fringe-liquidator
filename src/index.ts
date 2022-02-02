@@ -27,7 +27,7 @@ if (Number(process.env.MARKET_POLL_INTERVAL_MS) < 1000) {
   throw new Error('Market Poll Interval too low');
 }
 
-if (Number(process.env.DELAY_BETWEEN_TRANSACTIONS_MILLIS) < 10) {
+if (Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS) < 10) {
   throw new Error('Delay between transactions too low')
 }
 

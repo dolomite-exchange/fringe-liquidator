@@ -62,7 +62,7 @@ export async function liquidateAccount(
     return undefined;
   }
 
-  const sender = process.env.WALLET_ADDRESS;
+  const sender = process.env.ACCOUNT_WALLET_ADDRESS;
   const borrowMarkets: string[] = [];
   const supplyMarkets: string[] = [];
 
@@ -99,7 +99,7 @@ async function liquidateAccountInternal(
   const gasPrice = getGasPrice();
 
   return dolomite.liquidatorProxy.liquidate(
-    process.env.WALLET_ADDRESS,
+    process.env.ACCOUNT_WALLET_ADDRESS,
     new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
     liquidAccount.owner,
     liquidAccount.number,
@@ -131,7 +131,7 @@ export async function liquidateExpiredAccount(
     accountNumber: account.number,
   });
 
-  const sender = process.env.WALLET_ADDRESS;
+  const sender = process.env.ACCOUNT_WALLET_ADDRESS;
 
   if (process.env.DOLOMITE_AUTO_SELL_COLLATERAL.toLowerCase() === 'true') {
     return liquidateAccountInternalAndSellCollateral(account, sender, lastBlockTimestamp, true);
@@ -208,7 +208,7 @@ async function liquidateAccountInternalAndSellCollateral(
   const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL.toLowerCase() === 'true';
 
   return dolomite.liquidatorProxyWithAmm.liquidate(
-    process.env.WALLET_ADDRESS,
+    process.env.ACCOUNT_WALLET_ADDRESS,
     new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
     liquidAccount.owner,
     liquidAccount.number,
@@ -281,7 +281,7 @@ async function liquidateExpiredAccountInternal(
       if (delayHasPassed) {
         expiredMarkets.push(marketId);
         operation.fullyLiquidateExpiredAccount(
-          process.env.WALLET_ADDRESS,
+          process.env.ACCOUNT_WALLET_ADDRESS,
           new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
           account.owner,
           account.number,

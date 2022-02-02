@@ -2,6 +2,7 @@
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
+      ACCOUNT_WALLET_ADDRESS: string,
       DOLOMITE_ACCOUNT_NUMBER: string,
       DOLOMITE_AUTO_SELL_COLLATERAL: string,
       DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL: string,
@@ -15,9 +16,8 @@ declare global {
       DOLOMITE_OWED_PREFERENCES: string,
       ETHEREUM_NODE_URL: string,
       LIQUIDATION_KEY_EXPIRATION_SEC: string,
-      DELAY_BETWEEN_TRANSACTIONS_MILLIS: string,
+      SEQUENTIAL_TRANSACTION_DELAY_MS: string,
       SUBGRAPH_URL: string,
-      WALLET_ADDRESS: string,
     }
   }
 }

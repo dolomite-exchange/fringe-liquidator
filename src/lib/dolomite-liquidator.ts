@@ -113,7 +113,7 @@ export default class DolomiteLiquidator {
       ...liquidatableAccounts.map(async (account) => {
         try {
           await liquidateAccount(account, lastBlockTimestamp, blockNumber);
-          await delay(Number(process.env.DELAY_BETWEEN_TRANSACTIONS_MILLIS));
+          await delay(Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS));
         } catch (error) {
           Logger.error({
             at: 'DolomiteLiquidator#_liquidateAccounts',
@@ -128,7 +128,7 @@ export default class DolomiteLiquidator {
       ...expirableAccounts.map(async (account) => {
         try {
           await liquidateExpiredAccount(account, marketMap, lastBlockTimestamp);
-          await delay(Number(process.env.DELAY_BETWEEN_TRANSACTIONS_MILLIS));
+          await delay(Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS));
         } catch (error) {
           Logger.error({
             at: 'DolomiteLiquidator#_liquidateAccounts',

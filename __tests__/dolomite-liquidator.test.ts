@@ -95,7 +95,7 @@ describe('dolomite-liquidator', () => {
       });
 
       expect(sortedLiquidations[0][0])
-        .toBe(process.env.WALLET_ADDRESS);
+        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
       expect(sortedLiquidations[0][1].toFixed())
         .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[0][4].toFixed())
@@ -110,7 +110,7 @@ describe('dolomite-liquidator', () => {
           .map((p) => new BigNumber(p)));
 
       expect(sortedLiquidations[1][0])
-        .toBe(process.env.WALLET_ADDRESS);
+        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
       expect(sortedLiquidations[1][1].toFixed())
         .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[1][4].toFixed())
@@ -127,7 +127,7 @@ describe('dolomite-liquidator', () => {
       expect(liquidatableExpiredAccounts[0][4].eq(new BigNumber(2)))
         .toBe(true); // marketId
       expect(liquidatableExpiredAccounts[0][0])
-        .toBe(process.env.WALLET_ADDRESS);
+        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
       expect(liquidatableExpiredAccounts[0][1])
         .toEqual(new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER));
       expect(liquidatableExpiredAccounts[0][3])
@@ -193,7 +193,7 @@ describe('dolomite-liquidator', () => {
       const discount = INTEGERS.ONE.minus(new BigNumber(process.env.DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT));
 
       expect(sortedLiquidations[0][0])
-        .toBe(process.env.WALLET_ADDRESS);
+        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
       expect(sortedLiquidations[0][1].toFixed())
         .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[0][4].toFixed())
@@ -214,7 +214,7 @@ describe('dolomite-liquidator', () => {
         .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
 
       expect(sortedLiquidations[1][0])
-        .toBe(process.env.WALLET_ADDRESS);
+        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
       expect(sortedLiquidations[1][1].toFixed())
         .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[1][4].toFixed())
@@ -235,7 +235,7 @@ describe('dolomite-liquidator', () => {
         .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
 
       expect(liquidatableExpiredAccounts[0][0])
-        .toBe(process.env.WALLET_ADDRESS);
+        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
       expect(liquidatableExpiredAccounts[0][1])
         .toEqual(new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER));
       expect(liquidatableExpiredAccounts[0][2])

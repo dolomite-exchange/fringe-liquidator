@@ -5,8 +5,8 @@ import {
 import Logger from '../lib/logger';
 import { ChainId } from '../lib/ChainId';
 
-const WALLET_ADDRESS = process.env.WALLET_ADDRESS.toLowerCase();
-const opts = { defaultAccount: WALLET_ADDRESS };
+const ACCOUNT_WALLET_ADDRESS = process.env.ACCOUNT_WALLET_ADDRESS.toLowerCase();
+const opts = { defaultAccount: ACCOUNT_WALLET_ADDRESS };
 
 const provider: any = new Web3.providers.HttpProvider(process.env.ETHEREUM_NODE_URL);
 
@@ -22,43 +22,43 @@ export const dolomite = new DolomiteMargin(
 );
 
 export async function loadAccounts() {
-  if (!process.env.WALLET_PRIVATE_KEY) {
+  if (!process.env.ACCOUNT_WALLET_PRIVATE_KEY) {
     Logger.error({
       at: 'web3#loadAccounts',
-      message: 'WALLET_PRIVATE_KEY is not provided',
-      error: new Error('WALLET_PRIVATE_KEY is not provided'),
+      message: 'ACCOUNT_WALLET_PRIVATE_KEY is not provided',
+      error: new Error('ACCOUNT_WALLET_PRIVATE_KEY is not provided'),
     });
     return;
   }
 
-  if (!process.env.WALLET_ADDRESS) {
+  if (!process.env.ACCOUNT_WALLET_ADDRESS) {
     Logger.error({
       at: 'web3#loadAccounts',
-      message: 'WALLET_ADDRESS is not provided',
-      error: new Error('WALLET_ADDRESS is not provided'),
+      message: 'ACCOUNT_WALLET_ADDRESS is not provided',
+      error: new Error('ACCOUNT_WALLET_ADDRESS is not provided'),
     });
     return;
   }
 
   const dolomiteAccount = dolomite.web3.eth.accounts.wallet.add(
-    process.env.WALLET_PRIVATE_KEY,
+    process.env.ACCOUNT_WALLET_PRIVATE_KEY,
   );
 
   const dolomiteAddress = dolomiteAccount.address.toLowerCase();
 
-  if (dolomiteAddress !== WALLET_ADDRESS) {
+  if (dolomiteAddress !== ACCOUNT_WALLET_ADDRESS) {
     Logger.error({
       dolomiteAddress,
       at: 'web3#loadAccounts',
       message: 'Owner private key does not match address',
-      expected: process.env.WALLET_ADDRESS,
+      expected: process.env.ACCOUNT_WALLET_ADDRESS,
       error: new Error('Owner private key does not match address'),
     });
   } else {
     Logger.info({
       at: 'web3#loadAccounts',
       message: 'Loaded liquidator account',
-      address: WALLET_ADDRESS,
+      address: ACCOUNT_WALLET_ADDRESS,
     });
   }
 }
@@ -73,13 +73,13 @@ async function checkOperatorIsApproved(operator: string) {
     Logger.info({
       at: 'web3#loadAccounts',
       message: `Proxy contract at ${operator} has not been approved. Approving...`,
-      address: WALLET_ADDRESS,
+      address: ACCOUNT_WALLET_ADDRESS,
       operator,
     });
 
     await dolomite.permissions.approveOperator(
       operator,
-      { from: WALLET_ADDRESS },
+      { from: ACCOUNT_WALLET_ADDRESS },
     );
   }
 }
@@ -87,14 +87,14 @@ async function checkOperatorIsApproved(operator: string) {
 async function getIsGlobalOperator(operator: string): Promise<boolean> {
   return dolomite.getters.getIsGlobalOperator(
     operator,
-    { from: WALLET_ADDRESS },
+    { from: ACCOUNT_WALLET_ADDRESS },
   );
 }
 
 async function getIsLocalOperator(operator: string): Promise<boolean> {
   return dolomite.getters.getIsLocalOperator(
-    WALLET_ADDRESS,
+    ACCOUNT_WALLET_ADDRESS,
     operator,
-    { from: WALLET_ADDRESS },
+    { from: ACCOUNT_WALLET_ADDRESS },
   );
 }
