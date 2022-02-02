@@ -24,7 +24,11 @@ if (Number(process.env.ACCOUNT_POLL_INTERVAL_MS) < 1000) {
 }
 
 if (Number(process.env.MARKET_POLL_INTERVAL_MS) < 1000) {
-  throw new Error('Account Poll Interval too low');
+  throw new Error('Market Poll Interval too low');
+}
+
+if (Number(process.env.DELAY_BETWEEN_TRANSACTIONS_MILLIS) < 10) {
+  throw new Error('Delay between transactions too low')
 }
 
 if (!process.env.BASE_CURRENCY_ADDRESS) {

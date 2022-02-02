@@ -88,7 +88,7 @@ export async function getLiquidatableDolomiteAccounts(
   pageIndex: number = 0,
 ): Promise<{ accounts: ApiAccount[] }> {
   const query = `
-            query getActiveMarginAccounts($blockNumber: Int) {
+            query getActiveMarginAccounts($blockNumber: Int, $skip: Int) {
                 marginAccounts(where: { hasBorrowValue: true } block: { number: $blockNumber } first: 1000 skip: $skip) {
                   id
                   user

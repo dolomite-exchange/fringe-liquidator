@@ -88,9 +88,7 @@ export default class DolomiteLiquidator {
       .filter(account => !this.isCollateralized(account, marketMap, riskParams));
 
     // Do not put an account in both liquidatable and expired; prioritize liquidation
-    expirableAccounts = expirableAccounts.filter((ea) =>
-      !liquidatableAccounts.find((la) => la.id === ea.id),
-    );
+    expirableAccounts = expirableAccounts.filter((ea) => !liquidatableAccounts.find((la) => la.id === ea.id));
 
     if (liquidatableAccounts.length === 0 && expirableAccounts.length === 0) {
       Logger.info({
@@ -100,6 +98,14 @@ export default class DolomiteLiquidator {
       return;
     }
 
+    Logger.info({
+      message: 'liquidatableAccounts',
+      liquidatableAccounts,
+    })
+    Logger.info({
+      message: 'expirableAccounts',
+      expirableAccounts,
+    })
     liquidatableAccounts.forEach(a => this.liquidationStore.add(a));
     expirableAccounts.forEach(a => this.liquidationStore.add(a));
 
@@ -107,6 +113,7 @@ export default class DolomiteLiquidator {
       ...liquidatableAccounts.map(async (account) => {
         try {
           await liquidateAccount(account, lastBlockTimestamp, blockNumber);
+          await delay(Number(process.env.DELAY_BETWEEN_TRANSACTIONS_MILLIS));
         } catch (error) {
           Logger.error({
             at: 'DolomiteLiquidator#_liquidateAccounts',
@@ -116,9 +123,12 @@ export default class DolomiteLiquidator {
           });
         }
       }),
+    ]);
+    await Promise.all([
       ...expirableAccounts.map(async (account) => {
         try {
           await liquidateExpiredAccount(account, marketMap, lastBlockTimestamp);
+          await delay(Number(process.env.DELAY_BETWEEN_TRANSACTIONS_MILLIS));
         } catch (error) {
           Logger.error({
             at: 'DolomiteLiquidator#_liquidateAccounts',
@@ -162,16 +172,10 @@ export default class DolomiteLiquidator {
         }
         return memo;
       }, initial);
+
     const collateralization = supply.times(base)
       .div(borrow.abs())
       .integerValue(BigNumber.ROUND_FLOOR);
-    if (!collateralization.gte(riskParams.liquidationRatio)) {
-      Logger.info({
-        message: 'under collateralized',
-        account: account.id,
-        collateralization: collateralization.toFixed(),
-      })
-    }
     return collateralization.gte(riskParams.liquidationRatio);
   };
 }

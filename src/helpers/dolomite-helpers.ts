@@ -25,7 +25,7 @@ export function isExpired(
   expiresAt: Integer | null,
   latestBlockTimestamp: DateTime,
 ): boolean {
-  let expiresAtPlusDelay = expiresAt?.plus(process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS);
+  const expiresAtPlusDelay = expiresAt?.plus(process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS);
   return expiresAtPlusDelay?.lt(latestBlockTimestamp.toSeconds()) ?? false;
 }
 
@@ -182,8 +182,7 @@ async function liquidateAccountInternalAndSellCollateral(
       }
     })[0];
   const heldBalance = Object.values(liquidAccount.balances)
-    .filter(value => value.wei.gt('0'))
-    [0];
+    .filter(value => value.wei.gt('0'))[0];
   const gasPrice = getGasPrice();
 
   const owedToken = owedBalance.tokenAddress.toLowerCase();

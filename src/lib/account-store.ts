@@ -77,28 +77,14 @@ export default class AccountStore {
     const marketMap = this.marketStore.getMarketMap();
     const marketIndexMap = await this.getMarketIndexMap(marketMap, blockNumber);
 
-    let nextLiquidatableDolomiteAccounts: ApiAccount[] = [];
-    let nextExpirableAccounts: ApiAccount[] = [];
+    const nextLiquidatableDolomiteAccounts = await AccountStore.getPageableValues(pageIndex => {
+      return getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber, pageIndex);
+    });
+    const nextExpirableAccounts = await AccountStore.getPageableValues(pageIndex => {
+      return getExpiredAccounts(marketIndexMap, blockNumber, pageIndex);
+    });
 
-    let queryResultLiquidatableDolomiteAccounts: ApiAccount[];
-    let queryResultExpiredAccounts: ApiAccount[];
-    let pageIndex = 0;
-    do {
-      const [
-        { accounts: liquidatableDolomiteAccounts },
-        { accounts: expirableAccounts },
-      ] = await Promise.all([
-        getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber, pageIndex),
-        getExpiredAccounts(marketIndexMap, blockNumber, pageIndex),
-      ]);
-      nextLiquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts.concat(liquidatableDolomiteAccounts);
-      nextExpirableAccounts = nextExpirableAccounts.concat(expirableAccounts);
-
-      queryResultLiquidatableDolomiteAccounts = liquidatableDolomiteAccounts;
-      queryResultExpiredAccounts = expirableAccounts;
-      pageIndex += 1;
-    } while (queryResultLiquidatableDolomiteAccounts.length !== 0 && queryResultExpiredAccounts.length !== 0);
-
+    // don't set the field variables until both values have been retrieved from the network
     this.liquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts;
     this.expirableAccounts = nextExpirableAccounts;
 
@@ -132,5 +118,25 @@ export default class AccountStore {
       };
       return memo;
     }, {});
+  }
+
+  private static async getPageableValues(
+    getterFn: (pageIndex: number) => Promise<{ accounts: ApiAccount[] }>,
+  ): Promise<ApiAccount[]> {
+    let accounts: ApiAccount[] = []
+    let queryAccounts: ApiAccount[] = []
+    let pageIndex: number = 0;
+    do {
+      const { accounts: _accounts } = await getterFn(pageIndex)
+      queryAccounts = _accounts
+      if (queryAccounts.length === 0) {
+        break;
+      }
+      pageIndex += 1;
+
+      accounts = accounts.concat(queryAccounts);
+    } while (queryAccounts.length !== 0);
+
+    return accounts
   }
 }

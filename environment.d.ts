@@ -15,6 +15,7 @@ declare global {
       DOLOMITE_OWED_PREFERENCES: string,
       ETHEREUM_NODE_URL: string,
       LIQUIDATION_KEY_EXPIRATION_SEC: string,
+      DELAY_BETWEEN_TRANSACTIONS_MILLIS: string,
       SUBGRAPH_URL: string,
       WALLET_ADDRESS: string,
     }
