@@ -31,8 +31,8 @@ if (Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS) < 10) {
   throw new Error('Delay between transactions too low')
 }
 
-if (!process.env.BASE_CURRENCY_ADDRESS) {
-  throw new Error('BASE_CURRENCY_ADDRESS is not provided')
+if (!process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS) {
+  throw new Error('DOLOMITE_BRIDGE_CURRENCY_ADDRESS is not provided')
 }
 
 async function start() {
