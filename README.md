@@ -7,8 +7,8 @@
   <a href='https://coveralls.io/github/dolomite-exchange/liquidator' style="text-decoration:none;">
     <img src='https://coveralls.io/repos/github/dolomite-exchange/liquidator/badge.svg?t=toKMwT' alt='Coverage Status' />
   </a>
-  <a href='https://github.com/dolomite-exchange/dolomite-margin/blob/master/LICENSE' style="text-decoration:none;">
-    <img src='https://img.shields.io/github/license/dolomite-exchange/dolomite-margin.svg?longCache=true' alt='License' />
+  <a href='https://github.com/dolomite-exchange/liquidator/blob/master/LICENSE' style="text-decoration:none;">
+    <img src='https://img.shields.io/github/license/dolomite-exchange/liquidator.svg?longCache=true' alt='License' />
   </a>
   <a href='https://t.me/dolomite_official' style="text-decoration:none;">
     <img src='https://img.shields.io/badge/chat-on%20telegram-9cf.svg?longCache=true' alt='Telegram' />
