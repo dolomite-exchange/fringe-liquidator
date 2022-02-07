@@ -11,6 +11,7 @@ import {
 import { delay } from './delay';
 import Logger from './logger';
 import MarketStore from './market-store';
+import Pageable from './pageable';
 
 export default class AccountStore {
   public marketStore: MarketStore;
@@ -77,11 +78,13 @@ export default class AccountStore {
     const marketMap = this.marketStore.getMarketMap();
     const marketIndexMap = await this.getMarketIndexMap(marketMap, blockNumber);
 
-    const nextLiquidatableDolomiteAccounts = await AccountStore.getPageableValues(pageIndex => {
-      return getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber, pageIndex);
+    const nextLiquidatableDolomiteAccounts = await Pageable.getPageableValues(async (pageIndex) => {
+      const { accounts } = await getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber, pageIndex);
+      return accounts;
     });
-    const nextExpirableAccounts = await AccountStore.getPageableValues(pageIndex => {
-      return getExpiredAccounts(marketIndexMap, blockNumber, pageIndex);
+    const nextExpirableAccounts = await Pageable.getPageableValues<>(async (pageIndex) => {
+      const { accounts } = await getExpiredAccounts(marketIndexMap, blockNumber, pageIndex);
+      return accounts;
     });
 
     // don't set the field variables until both values have been retrieved from the network
@@ -118,25 +121,5 @@ export default class AccountStore {
       };
       return memo;
     }, {});
-  }
-
-  private static async getPageableValues(
-    getterFn: (pageIndex: number) => Promise<{ accounts: ApiAccount[] }>,
-  ): Promise<ApiAccount[]> {
-    let accounts: ApiAccount[] = []
-    let queryAccounts: ApiAccount[] = []
-    let pageIndex: number = 0;
-    do {
-      const { accounts: _accounts } = await getterFn(pageIndex)
-      queryAccounts = _accounts
-      if (queryAccounts.length === 0) {
-        break;
-      }
-      pageIndex += 1;
-
-      accounts = accounts.concat(queryAccounts);
-    } while (queryAccounts.length !== 0);
-
-    return accounts
   }
 }
