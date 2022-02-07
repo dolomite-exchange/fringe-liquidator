@@ -51,4 +51,3 @@ export interface GraphqlRiskParams {
   liquidationRatio: string
   liquidationReward: string
 }
-
