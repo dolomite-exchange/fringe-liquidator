@@ -35,6 +35,7 @@ docker run \
   -e DOLOMITE_BRIDGE_CURRENCY_ADDRESS=<WETH_ADDRESS> \
   -e ETHEREUM_NODE_URL=https://matic-mumbai.chainstacklabs.com \
   -e NETWORK_ID=80001 \
+  -e SUBGRAPH_URL=80001 \
   dolomiteprotocol/liquidator
 ```
 
@@ -120,3 +121,4 @@ Liquidator Account:
 | NETWORK_ID                                 | Ethereum Network ID                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | RISK_PARAMS_POLL_INTERVAL_MS               | How frequently to poll for risk params updates                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | SEQUENTIAL_TRANSACTION_DELAY_MS            | How long to wait between sending liquidation/expiration transactions. Useful for ensuring the liquidator's nonce is always correct and the Dolomite market price has time to reach equilibrium between many sequential liquidations, in case these sequential liquidations push the price far away from the Chainlink oracle price.                                                                                                                            |
+| SUBGRAPH_URL                               | The URL of the subgraph instance that contains margin account information                                                                                                                                                                                                                                                                                                                                                                                      |
