@@ -1,6 +1,6 @@
-<p align="center"><img src="https://dolomite.io/assets/img/logo.png" width="256" /></p>
+<p style="text-align: center"><img src="https://dolomite.io/assets/img/logo.png" width="256" alt="Dolomite Logo" /></p>
 
-<div align="center">
+<div style="text-align: center">
   <a href='https://hub.docker.com/r/dolomiteprotocol/liquidator' style="text-decoration:none;">
     <img src='https://img.shields.io/badge/docker-container-blue.svg?longCache=true' alt='Docker' />
   </a>
@@ -35,7 +35,7 @@ docker run \
   -e DOLOMITE_BRIDGE_CURRENCY_ADDRESS=<WETH_ADDRESS> \
   -e ETHEREUM_NODE_URL=https://matic-mumbai.chainstacklabs.com \
   -e NETWORK_ID=80001 \
-  -e SUBGRAPH_URL=80001 \
+  -e SUBGRAPH_URL=https://api.thegraph.com/subgraphs/name/dolomite-exchange/dolomite-v2-liquidator-mumbai \
   dolomiteprotocol/liquidator
 ```
 
