@@ -82,7 +82,7 @@ export default class AccountStore {
       const { accounts } = await getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber, pageIndex);
       return accounts;
     });
-    const nextExpirableAccounts = await Pageable.getPageableValues<>(async (pageIndex) => {
+    const nextExpirableAccounts = await Pageable.getPageableValues(async (pageIndex) => {
       const { accounts } = await getExpiredAccounts(marketIndexMap, blockNumber, pageIndex);
       return accounts;
     });
