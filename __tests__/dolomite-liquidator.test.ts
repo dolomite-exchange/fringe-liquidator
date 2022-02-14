@@ -1,16 +1,9 @@
-import {
-  BigNumber,
-  INTEGERS,
-} from '@dolomite-exchange/dolomite-margin';
+import { BigNumber, INTEGERS } from '@dolomite-exchange/dolomite-margin';
 import { AccountOperation } from '@dolomite-exchange/dolomite-margin/dist/src/modules/operate/AccountOperation';
 import { DateTime } from 'luxon';
 import { dolomite } from '../src/helpers/web3';
 import AccountStore from '../src/lib/account-store';
-import {
-  ApiAccount,
-  ApiMarket,
-  ApiRiskParam,
-} from '../src/lib/api-types';
+import { ApiAccount, ApiMarket, ApiRiskParam } from '../src/lib/api-types';
 import DolomiteLiquidator from '../src/lib/dolomite-liquidator';
 import LiquidationStore from '../src/lib/liquidation-store';
 import MarketStore from '../src/lib/market-store';
@@ -45,21 +38,11 @@ describe('dolomite-liquidator', () => {
       const expiredAccounts = getTestExpiredAccounts();
       const markets = getTestMarkets();
       const riskParams = getTestRiskParams();
-      accountStore.getLiquidatableDolomiteAccounts = jest.fn().mockImplementation(
-        () => liquidatableAccounts,
-      );
-      accountStore.getExpirableDolomiteAccounts = jest.fn().mockImplementation(
-        () => expiredAccounts,
-      );
-      marketStore.getMarketMap = jest.fn().mockImplementation(
-        () => markets,
-      );
-      riskParamsStore.getDolomiteRiskParams = jest.fn().mockImplementation(
-        () => riskParams,
-      );
-      dolomite.getters.isAccountLiquidatable = jest.fn().mockImplementation(
-        () => true,
-      );
+      accountStore.getLiquidatableDolomiteAccounts = jest.fn().mockImplementation(() => liquidatableAccounts);
+      accountStore.getExpirableDolomiteAccounts = jest.fn().mockImplementation(() => expiredAccounts);
+      marketStore.getMarketMap = jest.fn().mockImplementation(() => markets);
+      riskParamsStore.getDolomiteRiskParams = jest.fn().mockImplementation(() => riskParams);
+      dolomite.getters.isAccountLiquidatable = jest.fn().mockImplementation(() => true);
 
       let commitCount = 0;
       const liquidations: any[] = [];
@@ -73,13 +56,11 @@ describe('dolomite-liquidator', () => {
           return true;
         },
       }));
-      dolomite.liquidatorProxy.liquidate = jest.fn()
-        .mockImplementation(
-          (...args) => {
-            liquidations.push(args);
-            return { gas: 1 };
-          },
-        );
+      dolomite.liquidatorProxy.liquidate = jest.fn().mockImplementation((...args) => {
+          liquidations.push(args);
+          return { gas: 1 };
+        },
+      );
 
       await dolomiteLiquidator._liquidateAccounts();
 
@@ -144,40 +125,23 @@ describe('dolomite-liquidator', () => {
       const expiredAccounts = getTestExpiredAccounts();
       const markets = getTestMarkets();
       const riskParams = getTestRiskParams();
-      accountStore.getLiquidatableDolomiteAccounts = jest.fn()
-        .mockImplementation(
-          () => liquidatableAccounts,
-        );
-      accountStore.getExpirableDolomiteAccounts = jest.fn()
-        .mockImplementation(
-          () => expiredAccounts,
-        );
-      marketStore.getMarketMap = jest.fn()
-        .mockImplementation(
-          () => markets,
-        );
-      riskParamsStore.getDolomiteRiskParams = jest.fn()
-        .mockImplementation(
-          () => riskParams,
-        );
-      dolomite.getters.isAccountLiquidatable = jest.fn()
-        .mockImplementation(
-          () => true,
-        );
+      accountStore.getLiquidatableDolomiteAccounts = jest.fn().mockImplementation(() => liquidatableAccounts);
+      accountStore.getExpirableDolomiteAccounts = jest.fn().mockImplementation(() => expiredAccounts);
+      marketStore.getMarketMap = jest.fn().mockImplementation(() => markets);
+      riskParamsStore.getDolomiteRiskParams = jest.fn().mockImplementation(() => riskParams);
+      dolomite.getters.isAccountLiquidatable = jest.fn().mockImplementation(() => true);
 
       const liquidations: any[] = [];
       const liquidatableExpiredAccounts: any[] = [];
-      dolomite.liquidatorProxyWithAmm.liquidate = jest.fn()
-        .mockImplementation(
-          (...args) => {
-            if (args[7]) {
-              liquidatableExpiredAccounts.push(args);
-            } else {
-              liquidations.push(args);
-            }
-            return { gas: 1 };
-          },
-        );
+      dolomite.liquidatorProxyWithAmm.liquidate = jest.fn().mockImplementation((...args) => {
+          if (args[7]) {
+            liquidatableExpiredAccounts.push(args);
+          } else {
+            liquidations.push(args);
+          }
+          return { gas: 1 };
+        },
+      );
 
       await dolomiteLiquidator._liquidateAccounts();
 
