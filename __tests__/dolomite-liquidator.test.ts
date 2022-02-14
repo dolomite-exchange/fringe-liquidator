@@ -25,7 +25,9 @@ describe('dolomite-liquidator', () => {
     liquidationStore = new LiquidationStore();
     riskParamsStore = new RiskParamsStore(marketStore);
     dolomiteLiquidator = new DolomiteLiquidator(accountStore, marketStore, liquidationStore, riskParamsStore);
-    (marketStore.getBlockTimestamp as any) = jest.fn().mockImplementation(() => DateTime.utc(2020, 1, 1));
+    (
+      marketStore.getBlockTimestamp as any
+    ) = jest.fn().mockImplementation(() => DateTime.utc(2020, 1, 1));
   });
 
   describe('#_liquidateAccounts', () => {
@@ -47,20 +49,23 @@ describe('dolomite-liquidator', () => {
       let commitCount = 0;
       const liquidations: any[] = [];
       const liquidatableExpiredAccounts: any[] = [];
-      (AccountOperation as any).mockImplementation(() => ({
-        fullyLiquidateExpiredAccount: (...args) => {
-          liquidatableExpiredAccounts.push(args);
-        },
-        commit: () => {
-          commitCount += 1;
-          return true;
-        },
-      }));
+      (
+        AccountOperation as any
+      ).mockImplementation(() => (
+        {
+          fullyLiquidateExpiredAccount: (...args) => {
+            liquidatableExpiredAccounts.push(args);
+          },
+          commit: () => {
+            commitCount += 1;
+            return true;
+          },
+        }
+      ));
       dolomite.liquidatorProxy.liquidate = jest.fn().mockImplementation((...args) => {
-          liquidations.push(args);
-          return { gas: 1 };
-        },
-      );
+        liquidations.push(args);
+        return { gas: 1 };
+      });
 
       await dolomiteLiquidator._liquidateAccounts();
 
@@ -134,14 +139,13 @@ describe('dolomite-liquidator', () => {
       const liquidations: any[] = [];
       const liquidatableExpiredAccounts: any[] = [];
       dolomite.liquidatorProxyWithAmm.liquidate = jest.fn().mockImplementation((...args) => {
-          if (args[7]) {
-            liquidatableExpiredAccounts.push(args);
-          } else {
-            liquidations.push(args);
-          }
-          return { gas: 1 };
-        },
-      );
+        if (args[7]) {
+          liquidatableExpiredAccounts.push(args);
+        } else {
+          liquidations.push(args);
+        }
+        return { gas: 1 };
+      });
 
       await dolomiteLiquidator._liquidateAccounts();
 
