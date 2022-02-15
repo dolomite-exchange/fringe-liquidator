@@ -98,14 +98,6 @@ export default class DolomiteLiquidator {
       return;
     }
 
-    Logger.info({
-      message: 'liquidatableAccounts',
-      liquidatableAccounts,
-    })
-    Logger.info({
-      message: 'expirableAccounts',
-      expirableAccounts,
-    })
     liquidatableAccounts.forEach(a => this.liquidationStore.add(a));
     expirableAccounts.forEach(a => this.liquidationStore.add(a));
 
