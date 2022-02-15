@@ -109,36 +109,35 @@ export default class DolomiteLiquidator {
     liquidatableAccounts.forEach(a => this.liquidationStore.add(a));
     expirableAccounts.forEach(a => this.liquidationStore.add(a));
 
-    await Promise.all([
-      ...liquidatableAccounts.map(async (account) => {
-        try {
-          await liquidateAccount(account, lastBlockTimestamp, blockNumber);
-          await delay(Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS));
-        } catch (error) {
-          Logger.error({
-            at: 'DolomiteLiquidator#_liquidateAccounts',
-            message: `Failed to liquidate account: ${error.message}`,
-            account,
-            error,
-          });
-        }
-      }),
-    ]);
-    await Promise.all([
-      ...expirableAccounts.map(async (account) => {
-        try {
-          await liquidateExpiredAccount(account, marketMap, lastBlockTimestamp);
-          await delay(Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS));
-        } catch (error) {
-          Logger.error({
-            at: 'DolomiteLiquidator#_liquidateAccounts',
-            message: `Failed to liquidate expired account: ${error.message}`,
-            account,
-            error,
-          });
-        }
-      }),
-    ]);
+    for (let i = 0; i < liquidatableAccounts.length; i += 1) {
+      const account = liquidatableAccounts[i];
+      try {
+        await liquidateAccount(account, lastBlockTimestamp, blockNumber);
+        await delay(Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS));
+      } catch (error) {
+        Logger.error({
+          at: 'DolomiteLiquidator#_liquidateAccounts',
+          message: `Failed to liquidate account: ${error.message}`,
+          account,
+          error,
+        });
+      }
+    }
+
+    for (let i = 0; i < expirableAccounts.length; i += 1) {
+      const account = expirableAccounts[i];
+      try {
+        await liquidateExpiredAccount(account, marketMap, lastBlockTimestamp);
+        await delay(Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS));
+      } catch (error) {
+        Logger.error({
+          at: 'DolomiteLiquidator#_liquidateAccounts',
+          message: `Failed to liquidate expired account: ${error.message}`,
+          account,
+          error,
+        });
+      }
+    }
   };
 
   isCollateralized = (
