@@ -21,3 +21,6 @@ consoleScripts.js
 start-docker-test.sh
 
 output.log
+
+.env.production
+.env.production.*

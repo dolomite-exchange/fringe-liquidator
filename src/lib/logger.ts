@@ -18,7 +18,6 @@ class StackTransport extends Transport {
 }
 
 const alignedWithColorsAndTime = winston.format.combine(
-  winston.format.colorize(),
   winston.format.timestamp(),
   winston.format.printf((info) => {
     const {
