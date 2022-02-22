@@ -6,7 +6,7 @@ export default class LiquidationStore {
 
   constructor() {
     this.store = new LRU({
-      maxAge: Number(process.env.LIQUIDATION_KEY_EXPIRATION_SEC) * 1000,
+      maxAge: Number(process.env.LIQUIDATION_KEY_EXPIRATION_SECONDS) * 1000,
     });
   }
 

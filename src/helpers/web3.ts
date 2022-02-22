@@ -59,6 +59,7 @@ export async function loadAccounts() {
       at: 'web3#loadAccounts',
       message: 'Loaded liquidator account',
       address: ACCOUNT_WALLET_ADDRESS,
+      accountNumber: process.env.DOLOMITE_ACCOUNT_NUMBER,
     });
   }
 }

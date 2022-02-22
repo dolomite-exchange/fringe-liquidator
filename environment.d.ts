@@ -15,7 +15,7 @@ declare global {
       DOLOMITE_MIN_OVERHEAD_VALUE: string,
       DOLOMITE_OWED_PREFERENCES: string,
       ETHEREUM_NODE_URL: string,
-      LIQUIDATION_KEY_EXPIRATION_SEC: string,
+      LIQUIDATION_KEY_EXPIRATION_SECONDS: string,
       SEQUENTIAL_TRANSACTION_DELAY_MS: string,
       SUBGRAPH_URL: string,
     }

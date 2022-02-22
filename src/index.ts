@@ -1,23 +1,17 @@
-/* eslint no-console: 0 */
-/* eslint import/first: 0 */
-import './lib/env';
+import v8 from 'v8';
+// eslint-disable-next-line
+import '../src/lib/env';
 
 import { getDolomiteRiskParams } from './clients/dolomite';
 import { getSubgraphBlockNumber } from './helpers/block-helper';
+import { dolomite, initializeDolomiteLiquidations, loadAccounts } from './helpers/web3';
 import AccountStore from './lib/account-store';
-import MarketStore from './lib/market-store';
-import LiquidationStore from './lib/liquidation-store';
 import DolomiteLiquidator from './lib/dolomite-liquidator';
 import GasPriceUpdater from './lib/gas-price-updater';
-import {
-  dolomite,
-  initializeDolomiteLiquidations,
-  loadAccounts,
-} from './helpers/web3';
-import RiskParamsStore from './lib/risk-params-store';
+import LiquidationStore from './lib/liquidation-store';
 import Logger from './lib/logger';
-
-console.log(`Starting in env ${process.env.NODE_ENV}`);
+import MarketStore from './lib/market-store';
+import RiskParamsStore from './lib/risk-params-store';
 
 if (Number(process.env.ACCOUNT_POLL_INTERVAL_MS) < 1000) {
   throw new Error('Account Poll Interval too low');
@@ -47,24 +41,46 @@ async function start() {
 
   const { blockNumber } = await getSubgraphBlockNumber();
   const { riskParams } = await getDolomiteRiskParams(blockNumber);
+  const networkId = await dolomite.web3.eth.net.getId();
 
   const libraryDolomiteMargin = dolomite.contracts.dolomiteMargin.options.address
   if (riskParams.dolomiteMargin !== libraryDolomiteMargin) {
     const message = `Invalid dolomite margin address found!\n
     { network: ${riskParams.dolomiteMargin} library: ${libraryDolomiteMargin} }`;
     Logger.error(message);
-    console.error(message)
+    return Promise.reject(new Error(message));
+  } else if (networkId !== Number(process.env.NETWORK_ID)) {
+    const message = `Invalid network ID found!\n
+    { network: ${networkId} environment: ${Number(process.env.NETWORK_ID)} }`;
+    Logger.error(message);
     return Promise.reject(new Error(message));
   }
 
   Logger.info({
     message: 'DolomiteMargin data',
+    networkId,
+    ethereumNodeUrl: process.env.ETHEREUM_NODE_URL,
     subgraphUrl: process.env.SUBGRAPH_URL,
     dolomiteMargin: libraryDolomiteMargin,
     liquidatorProxyV1: dolomite.contracts.liquidatorProxyV1.options.address,
     liquidatorProxyV1WithAmm: dolomite.contracts.liquidatorProxyV1WithAmm.options.address,
     expiry: dolomite.contracts.expiry.options.address,
-    rampTime: process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS,
+    expirationRampTimeSeconds: process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS,
+    autoSellCollateral: process.env.DOLOMITE_AUTO_SELL_COLLATERAL,
+    liquidationsEnabled: process.env.DOLOMITE_LIQUIDATIONS_ENABLED,
+    expirationsEnabled: process.env.DOLOMITE_EXPIRATIONS_ENABLED,
+    revertOnFailToSellCollateral: process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL,
+    liquidationKeyExpirationSeconds: process.env.LIQUIDATION_KEY_EXPIRATION_SECONDS,
+    sequentialTransactionDelayMillis: process.env.SEQUENTIAL_TRANSACTION_DELAY_MS,
+    heapSize: `${v8.getHeapStatistics().heap_size_limit / (1024 * 1024)} MB`,
+  });
+
+  Logger.info({
+    message: 'Polling intervals',
+    accountPollIntervalMillis: process.env.ACCOUNT_POLL_INTERVAL_MS,
+    marketPollIntervalMillis: process.env.MARKET_POLL_INTERVAL_MS,
+    riskParamsPollIntervalMillis: process.env.RISK_PARAMS_POLL_INTERVAL_MS,
+    liquidatePollIntervalMillis: process.env.DOLOMITE_LIQUIDATE_POLL_INTERVAL_MS,
   });
 
   if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED === 'true') {
