@@ -82,6 +82,7 @@ export default class MarketStore {
     Logger.info({
       at: 'MarketStore#_update',
       message: 'Finished updating markets',
+      blockNumber,
     });
   };
 }

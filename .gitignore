@@ -23,4 +23,4 @@ start-docker-test.sh
 output.log
 
 .env.production
-liquidator-mumbai.production.env
+liquidator-mumbai-production.env
