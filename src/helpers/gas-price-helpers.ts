@@ -87,6 +87,6 @@ async function getGasPrices(dolomite: DolomiteMargin): Promise<{ fast: string }>
       message: errorMessage,
     });
     process.exit(-1);
-    Promise.reject(new Error(errorMessage));
+    return Promise.reject(new Error(errorMessage));
   }
 }
