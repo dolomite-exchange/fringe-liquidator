@@ -81,6 +81,12 @@ async function getGasPrices(dolomite: DolomiteMargin): Promise<{ fast: string }>
       fast: result.perArbGasTotal.dividedBy('1000000000').toFixed(), // convert to gwei
     };
   } else {
-    return Promise.reject(new Error(`Could not find network ID ${networkId}`));
+    const errorMessage = `Could not find network ID ${networkId}`;
+    Logger.error({
+      at: 'getGasPrices',
+      message: errorMessage,
+    });
+    process.exit(-1);
+    Promise.reject(new Error(errorMessage));
   }
 }
