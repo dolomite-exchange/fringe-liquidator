@@ -8,26 +8,48 @@ import { dolomite, initializeDolomiteLiquidations, loadAccounts } from './helper
 import AccountStore from './lib/account-store';
 import DolomiteLiquidator from './lib/dolomite-liquidator';
 import GasPriceUpdater from './lib/gas-price-updater';
+import {
+  checkBigNumber,
+  checkBooleanValue,
+  checkConditionally,
+  checkDuration,
+  checkEthereumAddress,
+  checkExists,
+  checkJsNumber,
+  checkPreferences,
+  checkPrivateKey,
+  checkUnconditionally,
+} from './lib/invariants';
 import LiquidationStore from './lib/liquidation-store';
 import Logger from './lib/logger';
 import MarketStore from './lib/market-store';
 import RiskParamsStore from './lib/risk-params-store';
 
-if (Number(process.env.ACCOUNT_POLL_INTERVAL_MS) < 1000) {
-  throw new Error('Account Poll Interval too low');
-}
-
-if (Number(process.env.MARKET_POLL_INTERVAL_MS) < 1000) {
-  throw new Error('Market Poll Interval too low');
-}
-
-if (Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS) < 10) {
-  throw new Error('Delay between transactions too low')
-}
-
-if (!process.env.BRIDGE_TOKEN_ADDRESS) {
-  throw new Error('BRIDGE_TOKEN_ADDRESS is not provided')
-}
+checkDuration('ACCOUNT_POLL_INTERVAL_MS', 1000);
+checkEthereumAddress('ACCOUNT_WALLET_ADDRESS');
+checkPrivateKey('ACCOUNT_WALLET_PRIVATE_KEY');
+checkBooleanValue('AUTO_SELL_COLLATERAL');
+checkEthereumAddress('BRIDGE_TOKEN_ADDRESS');
+checkUnconditionally('AUTO_SELL_COLLATERAL', () => checkPreferences('COLLATERAL_PREFERENCES'));
+checkBigNumber('DOLOMITE_ACCOUNT_NUMBER');
+checkExists('ETHEREUM_NODE_URL');
+checkBooleanValue('EXPIRATIONS_ENABLED');
+checkDuration('EXPIRED_ACCOUNT_DELAY_SECONDS', 0, /* isMillis = */ false);
+checkBigNumber('GAS_PRICE_MULTIPLIER');
+checkDuration('GAS_PRICE_POLL_INTERVAL_MS', 1000);
+checkDuration('LIQUIDATE_POLL_INTERVAL_MS', 1000);
+checkDuration('LIQUIDATION_KEY_EXPIRATION_SECONDS', 1, /* isMillis = */ false);
+checkBooleanValue('LIQUIDATIONS_ENABLED');
+checkDuration('MARKET_POLL_INTERVAL_MS', 1000);
+checkBigNumber('MIN_ACCOUNT_COLLATERALIZATION');
+checkBigNumber('MIN_OVERHEAD_VALUE');
+checkBigNumber('MIN_OWED_OUTPUT_AMOUNT_DISCOUNT');
+checkJsNumber('NETWORK_ID');
+checkUnconditionally('AUTO_SELL_COLLATERAL', () => checkPreferences('OWED_PREFERENCES'));
+checkConditionally('AUTO_SELL_COLLATERAL', () => checkBooleanValue('REVERT_ON_FAIL_TO_SELL_COLLATERAL'));
+checkDuration('RISK_PARAMS_POLL_INTERVAL_MS', 1000);
+checkDuration('SEQUENTIAL_TRANSACTION_DELAY_MS', 10);
+checkExists('SUBGRAPH_URL');
 
 async function start() {
   const marketStore = new MarketStore();
@@ -58,30 +80,54 @@ async function start() {
 
   Logger.info({
     message: 'DolomiteMargin data',
-    networkId,
-    ethereumNodeUrl: process.env.ETHEREUM_NODE_URL,
-    subgraphUrl: process.env.SUBGRAPH_URL,
+    accountWalletAddress: process.env.ACCOUNT_WALLET_ADDRESS,
+    autoSellCollateral: process.env.AUTO_SELL_COLLATERAL,
+    bridgeTokenAddress: process.env.BRIDGE_TOKEN_ADDRESS,
+    dolomiteAccountNumber: process.env.DOLOMITE_ACCOUNT_NUMBER,
     dolomiteMargin: libraryDolomiteMargin,
+    ethereumNodeUrl: process.env.ETHEREUM_NODE_URL,
+    expirationsEnabled: process.env.EXPIRATIONS_ENABLED,
+    expiredAccountDelaySeconds: process.env.EXPIRED_ACCOUNT_DELAY_SECONDS,
+    expiry: dolomite.contracts.expiry.options.address,
+    gasPriceMultiplier: process.env.GAS_PRICE_MULTIPLIER,
+    gasPriceAddition: process.env.GAS_PRICE_ADDITION,
+    heapSize: `${v8.getHeapStatistics().heap_size_limit / (1024 * 1024)} MB`,
+    initialGasPriceWei: process.env.INITIAL_GAS_PRICE_WEI,
+    liquidationKeyExpirationSeconds: process.env.LIQUIDATION_KEY_EXPIRATION_SECONDS,
+    liquidationsEnabled: process.env.LIQUIDATIONS_ENABLED,
     liquidatorProxyV1: dolomite.contracts.liquidatorProxyV1.options.address,
     liquidatorProxyV1WithAmm: dolomite.contracts.liquidatorProxyV1WithAmm.options.address,
-    expiry: dolomite.contracts.expiry.options.address,
-    expirationRampTimeSeconds: process.env.EXPIRED_ACCOUNT_DELAY_SECONDS,
-    autoSellCollateral: process.env.AUTO_SELL_COLLATERAL,
-    liquidationsEnabled: process.env.LIQUIDATIONS_ENABLED,
-    expirationsEnabled: process.env.EXPIRATIONS_ENABLED,
-    revertOnFailToSellCollateral: process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL,
-    liquidationKeyExpirationSeconds: process.env.LIQUIDATION_KEY_EXPIRATION_SECONDS,
+    networkId,
     sequentialTransactionDelayMillis: process.env.SEQUENTIAL_TRANSACTION_DELAY_MS,
-    heapSize: `${v8.getHeapStatistics().heap_size_limit / (1024 * 1024)} MB`,
+    subgraphUrl: process.env.SUBGRAPH_URL,
   });
 
   Logger.info({
     message: 'Polling intervals',
     accountPollIntervalMillis: process.env.ACCOUNT_POLL_INTERVAL_MS,
+    gasPricePollInterval: process.env.GAS_PRICE_POLL_INTERVAL_MS,
+    liquidatePollIntervalMillis: process.env.LIQUIDATE_POLL_INTERVAL_MS,
     marketPollIntervalMillis: process.env.MARKET_POLL_INTERVAL_MS,
     riskParamsPollIntervalMillis: process.env.RISK_PARAMS_POLL_INTERVAL_MS,
-    liquidatePollIntervalMillis: process.env.LIQUIDATE_POLL_INTERVAL_MS,
   });
+
+  if (process.env.AUTO_SELL_COLLATERAL === 'true') {
+    const revertOnFailToSellCollateral = process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true';
+    const discountUsedText = revertOnFailToSellCollateral ? '(unused)' : '';
+    Logger.info({
+      message: 'Auto Sell Collateral variables',
+      revertOnFailToSellCollateral: process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL,
+      minOwedOutputAmountDiscount: `${process.env.MIN_OWED_OUTPUT_AMOUNT_DISCOUNT} ${discountUsedText}`,
+    });
+  } else {
+    Logger.info({
+      message: 'Simple liquidation variables',
+      collateralPreferences: process.env.COLLATERAL_PREFERENCES,
+      minAccountCollateralization: process.env.MIN_ACCOUNT_COLLATERALIZATION,
+      minOverheadValue: process.env.MIN_OVERHEAD_VALUE,
+      owedPreferences: process.env.OWED_PREFERENCES,
+    });
+  }
 
   if (process.env.LIQUIDATIONS_ENABLED === 'true') {
     await initializeDolomiteLiquidations();

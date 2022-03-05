@@ -27,16 +27,8 @@ export async function updateGasPrice(dolomite: DolomiteMargin) {
     return;
   }
 
-  const multiplier = Number(process.env.GAS_PRICE_MULTIPLIER);
-  if (Number.isNaN(multiplier)) {
-    throw new Error('GAS_PRICE_MULTIPLIER not specified');
-  }
-
-  const addition = Number(process.env.GAS_PRICE_ADDITION || 0);
-  if (Number.isNaN(addition)) {
-    throw new Error('GAS_PRICE_ADDITION is invalid');
-  }
-
+  const multiplier = new BigNumber(process.env.GAS_PRICE_MULTIPLIER);
+  const addition = new BigNumber(process.env.GAS_PRICE_ADDITION);
   const networkId = Number(process.env.NETWORK_ID)
   const base = networkId === ChainId.Ethereum ? 100_000_000 : 1_000_000_000;
   const totalWei = new BigNumber(fast)

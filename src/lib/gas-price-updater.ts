@@ -3,7 +3,7 @@ import { delay } from './delay';
 import { updateGasPrice } from '../helpers/gas-price-helpers';
 import Logger from './logger';
 
-const UPDATE_FREQUENCY_MS = Number(process.env.GAS_PRICE_UPDATE_FREQUENCY_MS);
+const UPDATE_FREQUENCY_MS = Number(process.env.GAS_PRICE_POLL_INTERVAL_MS);
 
 export default class GasPriceUpdater {
   start = () => {

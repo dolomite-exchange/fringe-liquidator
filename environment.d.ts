@@ -10,6 +10,8 @@ declare global {
       COLLATERAL_PREFERENCES: string,
       EXPIRATIONS_ENABLED: string,
       EXPIRED_ACCOUNT_DELAY_SECONDS: string,
+      GAS_PRICE_ADDITION: string,
+      GAS_PRICE_MULTIPLIER: string,
       MIN_ACCOUNT_COLLATERALIZATION: string,
       MIN_OVERHEAD_VALUE: string,
       OWED_PREFERENCES: string,

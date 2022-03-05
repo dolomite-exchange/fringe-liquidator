@@ -1,12 +1,9 @@
-import {
-  DolomiteMargin,
-  Web3,
-} from '@dolomite-exchange/dolomite-margin';
-import Logger from '../lib/logger';
+import { DolomiteMargin, Web3 } from '@dolomite-exchange/dolomite-margin';
 import { ChainId } from '../lib/chain-id';
+import Logger from '../lib/logger';
 
-const ACCOUNT_WALLET_ADDRESS = process.env.ACCOUNT_WALLET_ADDRESS.toLowerCase();
-const opts = { defaultAccount: ACCOUNT_WALLET_ADDRESS };
+const accountWalletAddress = process.env.ACCOUNT_WALLET_ADDRESS.toLowerCase();
+const opts = { defaultAccount: accountWalletAddress };
 
 const provider: any = new Web3.providers.HttpProvider(process.env.ETHEREUM_NODE_URL);
 
@@ -23,45 +20,42 @@ export const dolomite = new DolomiteMargin(
 
 export async function loadAccounts() {
   if (!process.env.ACCOUNT_WALLET_PRIVATE_KEY) {
+    const errorMessage = 'ACCOUNT_WALLET_PRIVATE_KEY is not provided';
     Logger.error({
       at: 'web3#loadAccounts',
-      message: 'ACCOUNT_WALLET_PRIVATE_KEY is not provided',
-      error: new Error('ACCOUNT_WALLET_PRIVATE_KEY is not provided'),
+      message: errorMessage,
     });
-    return;
+    return Promise.reject(new Error(errorMessage));
   }
 
   if (!process.env.ACCOUNT_WALLET_ADDRESS) {
+    const errorMessage = 'ACCOUNT_WALLET_ADDRESS is not provided';
     Logger.error({
       at: 'web3#loadAccounts',
-      message: 'ACCOUNT_WALLET_ADDRESS is not provided',
-      error: new Error('ACCOUNT_WALLET_ADDRESS is not provided'),
+      message: errorMessage,
     });
-    return;
+    return Promise.reject(new Error(errorMessage));
   }
 
-  const dolomiteAccount = dolomite.web3.eth.accounts.wallet.add(
-    process.env.ACCOUNT_WALLET_PRIVATE_KEY,
-  );
+  const dolomiteAccount = dolomite.web3.eth.accounts.wallet.add(process.env.ACCOUNT_WALLET_PRIVATE_KEY);
 
-  const dolomiteAddress = dolomiteAccount.address.toLowerCase();
-
-  if (dolomiteAddress !== ACCOUNT_WALLET_ADDRESS) {
+  if (dolomiteAccount.address.toLowerCase() !== accountWalletAddress) {
     Logger.error({
-      dolomiteAddress,
       at: 'web3#loadAccounts',
-      message: 'Owner private key does not match address',
-      expected: process.env.ACCOUNT_WALLET_ADDRESS,
-      error: new Error('Owner private key does not match address'),
+      message: 'Owner private key does not match ENV variable address',
+      privateKeyResolvesTo: dolomiteAccount.address.toLowerCase(),
+      environmentVariable: accountWalletAddress.toLowerCase(),
     });
-  } else {
-    Logger.info({
-      at: 'web3#loadAccounts',
-      message: 'Loaded liquidator account',
-      address: ACCOUNT_WALLET_ADDRESS,
-      accountNumber: process.env.DOLOMITE_ACCOUNT_NUMBER,
-    });
+    return Promise.reject(new Error('Owner private key does not match address'));
   }
+
+  Logger.info({
+    at: 'web3#loadAccounts',
+    message: 'Loaded liquidator account',
+    accountWalletAddress,
+    dolomiteAccountNumber: process.env.DOLOMITE_ACCOUNT_NUMBER,
+  });
+  return Promise.resolve(dolomiteAccount.address);
 }
 
 export async function initializeDolomiteLiquidations() {
@@ -74,13 +68,13 @@ async function checkOperatorIsApproved(operator: string) {
     Logger.info({
       at: 'web3#loadAccounts',
       message: `Proxy contract at ${operator} has not been approved. Approving...`,
-      address: ACCOUNT_WALLET_ADDRESS,
+      address: accountWalletAddress,
       operator,
     });
 
     await dolomite.permissions.approveOperator(
       operator,
-      { from: ACCOUNT_WALLET_ADDRESS },
+      { from: accountWalletAddress },
     );
   }
 }
@@ -88,14 +82,14 @@ async function checkOperatorIsApproved(operator: string) {
 async function getIsGlobalOperator(operator: string): Promise<boolean> {
   return dolomite.getters.getIsGlobalOperator(
     operator,
-    { from: ACCOUNT_WALLET_ADDRESS },
+    { from: accountWalletAddress },
   );
 }
 
 async function getIsLocalOperator(operator: string): Promise<boolean> {
   return dolomite.getters.getIsLocalOperator(
-    ACCOUNT_WALLET_ADDRESS,
+    accountWalletAddress,
     operator,
-    { from: ACCOUNT_WALLET_ADDRESS },
+    { from: accountWalletAddress },
   );
 }

@@ -16,9 +16,9 @@ import { getGasPriceWei } from './gas-price-helpers';
 import Logger from '../lib/logger';
 import { dolomite } from './web3';
 
-const collateralPreferences: string[] = process.env.COLLATERAL_PREFERENCES.split(',')
+const collateralPreferences: string[] = process.env.COLLATERAL_PREFERENCES?.split(',')
   .map((pref) => pref.trim());
-const owedPreferences: string[] = process.env.OWED_PREFERENCES.split(',')
+const owedPreferences: string[] = process.env.OWED_PREFERENCES?.split(',')
   .map((pref) => pref.trim());
 
 export function isExpired(
@@ -146,28 +146,13 @@ async function liquidateAccountInternalAndSellCollateral(
   lastBlockTimestamp: DateTime,
   isExpiring: boolean,
 ): Promise<TxResult> {
-  if (!process.env.BRIDGE_TOKEN_ADDRESS) {
-    const message = 'BRIDGE_TOKEN_ADDRESS is not provided';
-    Logger.error({
-      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
-      message,
-    });
-    return Promise.reject(new Error(message));
-  }
-  if (!process.env.DOLOMITE_ACCOUNT_NUMBER) {
-    const message = 'DOLOMITE_ACCOUNT_NUMBER is not provided';
-    Logger.error({
-      at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
-      message,
-    });
-    return Promise.reject(new Error(message));
-  }
   if (!process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL) {
     const message = 'REVERT_ON_FAIL_TO_SELL_COLLATERAL is not provided';
     Logger.error({
       at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
       message,
     });
+    process.exit(-1);
     return Promise.reject(new Error(message));
   }
 
