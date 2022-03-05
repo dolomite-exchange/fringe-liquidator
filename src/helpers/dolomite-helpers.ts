@@ -12,20 +12,20 @@ import {
   ApiAccount,
   ApiMarket,
 } from '../lib/api-types';
-import { getGasPrice } from '../lib/gas-price';
+import { getGasPriceWei } from './gas-price-helpers';
 import Logger from '../lib/logger';
 import { dolomite } from './web3';
 
-const collateralPreferences: string[] = process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
+const collateralPreferences: string[] = process.env.COLLATERAL_PREFERENCES.split(',')
   .map((pref) => pref.trim());
-const owedPreferences: string[] = process.env.DOLOMITE_OWED_PREFERENCES.split(',')
+const owedPreferences: string[] = process.env.OWED_PREFERENCES.split(',')
   .map((pref) => pref.trim());
 
 export function isExpired(
   expiresAt: Integer | null,
   latestBlockTimestamp: DateTime,
 ): boolean {
-  const expiresAtPlusDelay = expiresAt?.plus(process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS);
+  const expiresAtPlusDelay = expiresAt?.plus(process.env.EXPIRED_ACCOUNT_DELAY_SECONDS);
   return expiresAtPlusDelay?.lt(latestBlockTimestamp.toSeconds()) ?? false;
 }
 
@@ -34,7 +34,7 @@ export async function liquidateAccount(
   lastBlockTimestamp: DateTime,
   blockNumber: number,
 ): Promise<TxResult | undefined> {
-  if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED !== 'true') {
+  if (process.env.LIQUIDATIONS_ENABLED !== 'true') {
     return undefined;
   }
 
@@ -85,7 +85,7 @@ export async function liquidateAccount(
     return Promise.reject(new Error('Supposedly liquidatable account has no collateral'));
   }
 
-  if (process.env.DOLOMITE_AUTO_SELL_COLLATERAL.toLowerCase() === 'true') {
+  if (process.env.AUTO_SELL_COLLATERAL.toLowerCase() === 'true') {
     return liquidateAccountInternalAndSellCollateral(liquidAccount, sender, lastBlockTimestamp, false);
   } else {
     return liquidateAccountInternal(liquidAccount, sender);
@@ -96,19 +96,19 @@ async function liquidateAccountInternal(
   liquidAccount: ApiAccount,
   sender: string,
 ): Promise<TxResult> {
-  const gasPrice = getGasPrice();
+  const gasPrice = getGasPriceWei();
 
   return dolomite.liquidatorProxy.liquidate(
     process.env.ACCOUNT_WALLET_ADDRESS,
     new BigNumber(process.env.DOLOMITE_ACCOUNT_NUMBER),
     liquidAccount.owner,
     liquidAccount.number,
-    new BigNumber(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION),
-    new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE),
+    new BigNumber(process.env.MIN_ACCOUNT_COLLATERALIZATION),
+    new BigNumber(process.env.MIN_OVERHEAD_VALUE),
     owedPreferences.map((p) => new BigNumber(p)),
     collateralPreferences.map((p) => new BigNumber(p)),
     {
-      gasPrice,
+      gasPrice: gasPrice.toFixed(),
       from: sender,
       confirmationType: ConfirmationType.Hash,
     },
@@ -120,7 +120,7 @@ export async function liquidateExpiredAccount(
   marketMap: { [marketId: string]: ApiMarket },
   lastBlockTimestamp: DateTime,
 ) {
-  if (process.env.DOLOMITE_EXPIRATIONS_ENABLED.toLowerCase() !== 'true') {
+  if (process.env.EXPIRATIONS_ENABLED.toLowerCase() !== 'true') {
     return false;
   }
 
@@ -133,7 +133,7 @@ export async function liquidateExpiredAccount(
 
   const sender = process.env.ACCOUNT_WALLET_ADDRESS;
 
-  if (process.env.DOLOMITE_AUTO_SELL_COLLATERAL.toLowerCase() === 'true') {
+  if (process.env.AUTO_SELL_COLLATERAL.toLowerCase() === 'true') {
     return liquidateAccountInternalAndSellCollateral(account, sender, lastBlockTimestamp, true);
   } else {
     return liquidateExpiredAccountInternal(account, marketMap, sender, lastBlockTimestamp);
@@ -146,8 +146,8 @@ async function liquidateAccountInternalAndSellCollateral(
   lastBlockTimestamp: DateTime,
   isExpiring: boolean,
 ): Promise<TxResult> {
-  if (!process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS) {
-    const message = 'DOLOMITE_BRIDGE_CURRENCY_ADDRESS is not provided';
+  if (!process.env.BRIDGE_TOKEN_ADDRESS) {
+    const message = 'BRIDGE_TOKEN_ADDRESS is not provided';
     Logger.error({
       at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
       message,
@@ -162,8 +162,8 @@ async function liquidateAccountInternalAndSellCollateral(
     });
     return Promise.reject(new Error(message));
   }
-  if (!process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL) {
-    const message = 'DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL is not provided';
+  if (!process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL) {
+    const message = 'REVERT_ON_FAIL_TO_SELL_COLLATERAL is not provided';
     Logger.error({
       at: 'dolomite-helpers#liquidateAccountInternalAndSellCollateral',
       message,
@@ -171,7 +171,7 @@ async function liquidateAccountInternalAndSellCollateral(
     return Promise.reject(new Error(message));
   }
 
-  const bridgeAddress = process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS.toLowerCase();
+  const bridgeAddress = process.env.BRIDGE_TOKEN_ADDRESS.toLowerCase();
   const owedBalance = Object.values(liquidAccount.balances)
     .filter(balance => {
       if (isExpiring) {
@@ -183,7 +183,7 @@ async function liquidateAccountInternalAndSellCollateral(
     })[0];
   const heldBalance = Object.values(liquidAccount.balances)
     .filter(value => value.wei.gt('0'))[0];
-  const gasPrice = getGasPrice();
+  const gasPrice = getGasPriceWei();
 
   const owedToken = owedBalance.tokenAddress.toLowerCase();
   const heldToken = heldBalance.tokenAddress.toLowerCase();
@@ -195,17 +195,17 @@ async function liquidateAccountInternalAndSellCollateral(
     tokenPath = [heldBalance.tokenAddress, bridgeAddress, owedBalance.tokenAddress];
   }
 
-  const minOwedOutputDiscount = new BigNumber(process.env.DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT);
+  const minOwedOutputDiscount = new BigNumber(process.env.MIN_OWED_OUTPUT_AMOUNT_DISCOUNT);
   if (minOwedOutputDiscount.gte(INTEGERS.ONE)) {
-    return Promise.reject(new Error('DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be less than 1.00'));
+    return Promise.reject(new Error('MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be less than 1.00'));
   } else if (minOwedOutputDiscount.lt(INTEGERS.ZERO)) {
-    return Promise.reject(new Error('DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be greater than or equal to 0'));
+    return Promise.reject(new Error('MIN_OWED_OUTPUT_AMOUNT_DISCOUNT must be greater than or equal to 0'));
   }
 
   const minOwedOutputAmount = owedBalance.wei.abs()
     .times(INTEGERS.ONE.minus(minOwedOutputDiscount))
     .integerValue(BigNumber.ROUND_FLOOR);
-  const revertOnFailToSellCollateral = process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL.toLowerCase() === 'true';
+  const revertOnFailToSellCollateral = process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL.toLowerCase() === 'true';
 
   return dolomite.liquidatorProxyWithAmm.liquidate(
     process.env.ACCOUNT_WALLET_ADDRESS,
@@ -219,7 +219,7 @@ async function liquidateAccountInternalAndSellCollateral(
     minOwedOutputAmount,
     revertOnFailToSellCollateral,
     {
-      gasPrice,
+      gasPrice: gasPrice.toFixed(),
       from: sender,
       confirmationType: ConfirmationType.Hash,
     },
@@ -275,7 +275,7 @@ async function liquidateExpiredAccountInternal(
 
       const expiryTimestamp = balance.expiresAt;
       const lastBlockTimestampBN = new BigNumber(Math.floor(lastBlockTimestamp.toMillis() / 1000));
-      const delayHasPassed = expiryTimestamp.plus(process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS)
+      const delayHasPassed = expiryTimestamp.plus(process.env.EXPIRED_ACCOUNT_DELAY_SECONDS)
         .lte(lastBlockTimestampBN);
 
       if (delayHasPassed) {
@@ -304,7 +304,7 @@ async function liquidateExpiredAccountInternal(
 }
 
 async function commitLiquidation(account, operation, sender): Promise<boolean> {
-  const gasPrice = getGasPrice();
+  const gasPrice = getGasPriceWei();
 
   Logger.info({
     at: 'dolomite-helpers#commitLiquidation',

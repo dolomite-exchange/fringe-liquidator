@@ -3,7 +3,7 @@ import {
   Web3,
 } from '@dolomite-exchange/dolomite-margin';
 import Logger from '../lib/logger';
-import { ChainId } from '../lib/ChainId';
+import { ChainId } from '../lib/chain-id';
 
 const ACCOUNT_WALLET_ADDRESS = process.env.ACCOUNT_WALLET_ADDRESS.toLowerCase();
 const opts = { defaultAccount: ACCOUNT_WALLET_ADDRESS };

@@ -25,8 +25,8 @@ if (Number(process.env.SEQUENTIAL_TRANSACTION_DELAY_MS) < 10) {
   throw new Error('Delay between transactions too low')
 }
 
-if (!process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS) {
-  throw new Error('DOLOMITE_BRIDGE_CURRENCY_ADDRESS is not provided')
+if (!process.env.BRIDGE_TOKEN_ADDRESS) {
+  throw new Error('BRIDGE_TOKEN_ADDRESS is not provided')
 }
 
 async function start() {
@@ -65,11 +65,11 @@ async function start() {
     liquidatorProxyV1: dolomite.contracts.liquidatorProxyV1.options.address,
     liquidatorProxyV1WithAmm: dolomite.contracts.liquidatorProxyV1WithAmm.options.address,
     expiry: dolomite.contracts.expiry.options.address,
-    expirationRampTimeSeconds: process.env.DOLOMITE_EXPIRED_ACCOUNT_DELAY_SECONDS,
-    autoSellCollateral: process.env.DOLOMITE_AUTO_SELL_COLLATERAL,
-    liquidationsEnabled: process.env.DOLOMITE_LIQUIDATIONS_ENABLED,
-    expirationsEnabled: process.env.DOLOMITE_EXPIRATIONS_ENABLED,
-    revertOnFailToSellCollateral: process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL,
+    expirationRampTimeSeconds: process.env.EXPIRED_ACCOUNT_DELAY_SECONDS,
+    autoSellCollateral: process.env.AUTO_SELL_COLLATERAL,
+    liquidationsEnabled: process.env.LIQUIDATIONS_ENABLED,
+    expirationsEnabled: process.env.EXPIRATIONS_ENABLED,
+    revertOnFailToSellCollateral: process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL,
     liquidationKeyExpirationSeconds: process.env.LIQUIDATION_KEY_EXPIRATION_SECONDS,
     sequentialTransactionDelayMillis: process.env.SEQUENTIAL_TRANSACTION_DELAY_MS,
     heapSize: `${v8.getHeapStatistics().heap_size_limit / (1024 * 1024)} MB`,
@@ -80,10 +80,10 @@ async function start() {
     accountPollIntervalMillis: process.env.ACCOUNT_POLL_INTERVAL_MS,
     marketPollIntervalMillis: process.env.MARKET_POLL_INTERVAL_MS,
     riskParamsPollIntervalMillis: process.env.RISK_PARAMS_POLL_INTERVAL_MS,
-    liquidatePollIntervalMillis: process.env.DOLOMITE_LIQUIDATE_POLL_INTERVAL_MS,
+    liquidatePollIntervalMillis: process.env.LIQUIDATE_POLL_INTERVAL_MS,
   });
 
-  if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED === 'true') {
+  if (process.env.LIQUIDATIONS_ENABLED === 'true') {
     await initializeDolomiteLiquidations();
   }
 
@@ -92,7 +92,7 @@ async function start() {
   riskParamsStore.start();
   gasPriceUpdater.start();
 
-  if (process.env.DOLOMITE_LIQUIDATIONS_ENABLED === 'true' || process.env.DOLOMITE_EXPIRATIONS_ENABLED === 'true') {
+  if (process.env.LIQUIDATIONS_ENABLED === 'true' || process.env.EXPIRATIONS_ENABLED === 'true') {
     dolomiteLiquidator.start();
   }
   return true

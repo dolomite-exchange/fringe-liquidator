@@ -41,7 +41,7 @@ export default class DolomiteLiquidator {
       at: 'DolomiteLiquidator#start',
       message: 'Starting DolomiteMargin liquidator',
     });
-    delay(Number(process.env.DOLOMITE_LIQUIDATE_POLL_INTERVAL_MS))
+    delay(Number(process.env.LIQUIDATE_POLL_INTERVAL_MS))
       .then(() => this._poll())
       .catch(() => this._poll());
   };
@@ -52,7 +52,7 @@ export default class DolomiteLiquidator {
     for (; ;) {
       await this._liquidateAccounts();
 
-      await delay(Number(process.env.DOLOMITE_LIQUIDATE_POLL_INTERVAL_MS));
+      await delay(Number(process.env.LIQUIDATE_POLL_INTERVAL_MS));
     }
   };
 

@@ -32,9 +32,9 @@ describe('dolomite-liquidator', () => {
 
   describe('#_liquidateAccounts', () => {
     it('Successfully liquidates accounts normally', async () => {
-      process.env.DOLOMITE_EXPIRATIONS_ENABLED = 'true';
-      process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS = getTestMarkets()[0].tokenAddress;
-      process.env.DOLOMITE_AUTO_SELL_COLLATERAL = 'false';
+      process.env.EXPIRATIONS_ENABLED = 'true';
+      process.env.BRIDGE_TOKEN_ADDRESS = getTestMarkets()[0].tokenAddress;
+      process.env.AUTO_SELL_COLLATERAL = 'false';
 
       const liquidatableAccounts = getTestLiquidatableAccounts();
       const expiredAccounts = getTestExpiredAccounts();
@@ -85,14 +85,14 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[0][1].toFixed())
         .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[0][4].toFixed())
-        .toBe(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION);
+        .toBe(process.env.MIN_ACCOUNT_COLLATERALIZATION);
       expect(sortedLiquidations[0][5].toFixed())
-        .toBe(new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE).toFixed());
+        .toBe(new BigNumber(process.env.MIN_OVERHEAD_VALUE).toFixed());
       expect(sortedLiquidations[0][6])
-        .toEqual(process.env.DOLOMITE_OWED_PREFERENCES.split(',')
+        .toEqual(process.env.OWED_PREFERENCES.split(',')
           .map((p) => new BigNumber(p)));
       expect(sortedLiquidations[0][7])
-        .toEqual(process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
+        .toEqual(process.env.COLLATERAL_PREFERENCES.split(',')
           .map((p) => new BigNumber(p)));
 
       expect(sortedLiquidations[1][0])
@@ -100,14 +100,14 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[1][1].toFixed())
         .toBe(process.env.DOLOMITE_ACCOUNT_NUMBER);
       expect(sortedLiquidations[1][4].toFixed())
-        .toBe(process.env.DOLOMITE_MIN_ACCOUNT_COLLATERALIZATION);
+        .toBe(process.env.MIN_ACCOUNT_COLLATERALIZATION);
       expect(sortedLiquidations[1][5].toFixed())
-        .toBe(new BigNumber(process.env.DOLOMITE_MIN_OVERHEAD_VALUE).toFixed());
+        .toBe(new BigNumber(process.env.MIN_OVERHEAD_VALUE).toFixed());
       expect(sortedLiquidations[1][6])
-        .toEqual(process.env.DOLOMITE_OWED_PREFERENCES.split(',')
+        .toEqual(process.env.OWED_PREFERENCES.split(',')
           .map((p) => new BigNumber(p)));
       expect(sortedLiquidations[1][7])
-        .toEqual(process.env.DOLOMITE_COLLATERAL_PREFERENCES.split(',')
+        .toEqual(process.env.COLLATERAL_PREFERENCES.split(',')
           .map((p) => new BigNumber(p)));
 
       expect(liquidatableExpiredAccounts[0][4].eq(new BigNumber(2)))
@@ -121,10 +121,10 @@ describe('dolomite-liquidator', () => {
     });
 
     it('Successfully liquidates accounts while selling collateral', async () => {
-      process.env.DOLOMITE_EXPIRATIONS_ENABLED = 'true';
-      process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS = getTestMarkets()[0].tokenAddress; // WETH
-      process.env.DOLOMITE_AUTO_SELL_COLLATERAL = 'true';
-      process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL = 'false';
+      process.env.EXPIRATIONS_ENABLED = 'true';
+      process.env.BRIDGE_TOKEN_ADDRESS = getTestMarkets()[0].tokenAddress; // WETH
+      process.env.AUTO_SELL_COLLATERAL = 'true';
+      process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL = 'false';
 
       const liquidatableAccounts = getTestLiquidatableAccounts();
       const expiredAccounts = getTestExpiredAccounts();
@@ -158,7 +158,7 @@ describe('dolomite-liquidator', () => {
         return liquidations.find((l) => l[2] === account.owner && l[3] === account.number);
       });
 
-      const discount = INTEGERS.ONE.minus(new BigNumber(process.env.DOLOMITE_MIN_OWED_OUTPUT_AMOUNT_DISCOUNT));
+      const discount = INTEGERS.ONE.minus(new BigNumber(process.env.MIN_OWED_OUTPUT_AMOUNT_DISCOUNT));
 
       expect(sortedLiquidations[0][0])
         .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
@@ -171,7 +171,7 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[0][6])
         .toEqual([
           liquidatableAccounts[0].balances[0].tokenAddress,
-          process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS,
+          process.env.BRIDGE_TOKEN_ADDRESS,
           liquidatableAccounts[0].balances[1].tokenAddress,
         ]);
       expect(sortedLiquidations[0][7])
@@ -179,7 +179,7 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[0][8])
         .toEqual(liquidatableAccounts[0].balances[1].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
       expect(sortedLiquidations[0][9])
-        .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
+        .toEqual(process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
 
       expect(sortedLiquidations[1][0])
         .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
@@ -192,7 +192,7 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[1][6])
         .toEqual([
           liquidatableAccounts[0].balances[1].tokenAddress,
-          process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS,
+          process.env.BRIDGE_TOKEN_ADDRESS,
           liquidatableAccounts[0].balances[0].tokenAddress,
         ]);
       expect(sortedLiquidations[1][7])
@@ -200,7 +200,7 @@ describe('dolomite-liquidator', () => {
       expect(sortedLiquidations[1][8])
         .toEqual(liquidatableAccounts[1].balances[0].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
       expect(sortedLiquidations[1][9])
-        .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
+        .toEqual(process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
 
       expect(liquidatableExpiredAccounts[0][0])
         .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
@@ -217,7 +217,7 @@ describe('dolomite-liquidator', () => {
       expect(liquidatableExpiredAccounts[0][6])
         .toEqual([
           expiredAccounts[0].balances[1].tokenAddress,
-          process.env.DOLOMITE_BRIDGE_CURRENCY_ADDRESS,
+          process.env.BRIDGE_TOKEN_ADDRESS,
           expiredAccounts[0].balances[2].tokenAddress,
         ]);
       expect(liquidatableExpiredAccounts[0][7])
@@ -225,7 +225,7 @@ describe('dolomite-liquidator', () => {
       expect(liquidatableExpiredAccounts[0][8])
         .toEqual(expiredAccounts[0].balances[2].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
       expect(liquidatableExpiredAccounts[0][9])
-        .toEqual(process.env.DOLOMITE_REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
+        .toEqual(process.env.REVERT_ON_FAIL_TO_SELL_COLLATERAL === 'true');
     });
   });
 });
