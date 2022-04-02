@@ -1,4 +1,4 @@
-<p style="text-align: center"><img src="https://dolomite.io/assets/img/logo.png" width="256" alt="Dolomite Logo" /></p>
+<p style="text-align: center"><img src="https://github.com/dolomite-exchange/dolomite-margin/raw/master/docs/dolomite-logo.png" width="256" alt="Dolomite Logo" /></p>
 
 <div style="text-align: center">
   <a href='https://hub.docker.com/r/dolomiteprotocol/liquidator' style="text-decoration:none;">
