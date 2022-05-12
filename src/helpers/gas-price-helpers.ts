@@ -1,14 +1,17 @@
-import { BigNumber, DolomiteMargin, Integer } from '@dolomite-exchange/dolomite-margin';
-import request from 'request-promise-native';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import BigNumber from 'bignumber.js';
+import fetch from 'node-fetch';
 import { ChainId } from '../lib/chain-id';
 import Logger from '../lib/logger';
 
 let lastPriceWei: string = process.env.INITIAL_GAS_PRICE_WEI;
+let priorityFee: string | undefined;
+let maxFeePerGas: string | undefined;
 
-export async function updateGasPrice(dolomite: DolomiteMargin) {
-  let response;
+export async function updateGasPrice() {
+  let response: { fast: BigNumber } | { priorityFee: BigNumber; maxFeePerGas: BigNumber };
   try {
-    response = await getGasPrices(dolomite);
+    response = await getGasPrices();
   } catch (error) {
     Logger.error({
       at: 'getGasPrices',
@@ -18,60 +21,91 @@ export async function updateGasPrice(dolomite: DolomiteMargin) {
     return;
   }
 
-  const { fast } = response;
-  if (!fast) {
+  if ('fast' in response) {
+    const multiplier = new BigNumber(process.env.GAS_PRICE_MULTIPLIER);
+    const addition = new BigNumber(process.env.GAS_PRICE_ADDITION);
+    const networkId = Number(process.env.NETWORK_ID)
+    const base = networkId === ChainId.Ethereum ? 100_000_000 : 1_000_000_000;
+    const totalWei = new BigNumber(response.fast)
+      .times(base)
+      .times(multiplier)
+      .plus(addition)
+      .toFixed(0);
+
+    Logger.info({
+      at: 'updateGasPrice',
+      message: 'Updating gas price',
+      gasPrice: totalWei,
+    });
+
+    lastPriceWei = totalWei;
+  } else if ('priorityFee' in response) {
+    priorityFee = response.priorityFee.times('1000000000').toFixed();
+    maxFeePerGas = response.maxFeePerGas.times('1000000000').toFixed();
+  } else {
     Logger.error({
       at: 'updateGasPrice',
       message: 'gas api did not return fast',
     });
-    return;
   }
-
-  const multiplier = new BigNumber(process.env.GAS_PRICE_MULTIPLIER);
-  const addition = new BigNumber(process.env.GAS_PRICE_ADDITION);
-  const networkId = Number(process.env.NETWORK_ID)
-  const base = networkId === ChainId.Ethereum ? 100_000_000 : 1_000_000_000;
-  const totalWei = new BigNumber(fast)
-    .times(base)
-    .times(multiplier)
-    .plus(addition)
-    .toFixed(0);
-
-  Logger.info({
-    at: 'updateGasPrice',
-    message: 'Updating gas price',
-    gasPrice: totalWei,
-  });
-
-  lastPriceWei = totalWei;
 }
 
-export function getGasPriceWei(): Integer {
+export function getGasPriceWei(): BigNumber {
   return new BigNumber(lastPriceWei);
 }
 
-async function getGasPrices(dolomite: DolomiteMargin): Promise<{ fast: string }> {
+export function getGasPriceWeiForEip1559(): { maxFeePerGas: BigNumber, priorityFee: BigNumber } | undefined {
+  return maxFeePerGas && priorityFee
+    ? { maxFeePerGas: new BigNumber(maxFeePerGas), priorityFee: new BigNumber(priorityFee) }
+    : undefined
+}
+
+async function getGasPrices(): Promise<{ fast: BigNumber } | { priorityFee: BigNumber; maxFeePerGas: BigNumber }> {
   Logger.info({
     at: 'getGasPrices',
     message: 'Fetching gas prices',
   });
 
   const networkId = Number(process.env.NETWORK_ID);
-  if (networkId === ChainId.Matic || networkId === ChainId.Mumbai) {
+  if (networkId === ChainId.Ethereum) {
+    if (!process.env.GAS_REQUEST_API_KEY) {
+      Logger.error({
+        at: 'getGasPrices',
+        message: 'No process.env.GAS_REQUEST_API_KEY set',
+      });
+      return Promise.reject(new Error('No process.env.GAS_REQUEST_API_KEY set!'));
+    }
+
+    return fetch('https://api.blocknative.com/gasprices/blockprices', {
+      method: 'GET',
+      timeout: Number(process.env.GAS_REQUEST_TIMEOUT_MS ?? 10000),
+      headers: {
+        Authorization: process.env.GAS_REQUEST_API_KEY,
+      },
+    })
+      .then(response => response.json())
+      .then(response => {
+        const OneGwei = new BigNumber('1000000000');
+        const estimatedPriceObject = response?.blockPrices?.[0].estimatedPrices?.[0].estimatedPrices?.[0];
+        return {
+          priorityFee: new BigNumber(estimatedPriceObject.maxPriorityFeePerGas).times(OneGwei),
+          maxFeePerGas: new BigNumber(estimatedPriceObject.maxFeePerGas).times(OneGwei),
+        }
+      });
+  } else if (networkId === ChainId.Rinkeby) {
+    return Promise.resolve({
+      priorityFee: new BigNumber('1000000000'),
+      maxFeePerGas: new BigNumber('1000000000'),
+    });
+  } else if (networkId === ChainId.Matic || networkId === ChainId.Mumbai) {
     const uri = networkId === ChainId.Matic
       ? 'https://gasstation-mainnet.matic.network/'
       : 'https://gasstation-mumbai.matic.today/';
-    const response = await request({
-      uri,
+    return fetch(uri, {
       method: 'GET',
-      timeout: process.env.GAS_REQUEST_TIMEOUT_MS,
-    });
-    return JSON.parse(response);
-  } else if (networkId === ChainId.Arbitrum || networkId === ChainId.ArbitrumTest) {
-    const result = await dolomite.arbitrumGasInfo.getPricesInWei();
-    return {
-      fast: result.perArbGasTotal.dividedBy('1000000000').toFixed(), // convert to gwei
-    };
+      timeout: Number(process.env.GAS_REQUEST_TIMEOUT_MS ?? 10000),
+    })
+      .then(response => response.json());
   } else {
     const errorMessage = `Could not find network ID ${networkId}`;
     Logger.error({

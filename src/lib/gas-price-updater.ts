@@ -1,4 +1,3 @@
-import { dolomite } from '../helpers/web3';
 import { delay } from './delay';
 import { updateGasPrice } from '../helpers/gas-price-helpers';
 import Logger from './logger';
@@ -18,7 +17,7 @@ export default class GasPriceUpdater {
     // noinspection InfiniteLoopJS
     for (;;) {
       try {
-        await updateGasPrice(dolomite);
+        await updateGasPrice();
       } catch (error) {
         Logger.error({
           at: 'GasPriceUpdater#updateGasPrices',

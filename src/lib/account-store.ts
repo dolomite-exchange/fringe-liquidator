@@ -1,36 +1,18 @@
-import { BigNumber } from '@dolomite-exchange/dolomite-margin';
-import {
-  getExpiredAccounts,
-  getLiquidatableDolomiteAccounts,
-} from '../clients/dolomite';
-import { dolomite } from '../helpers/web3';
-import {
-  ApiAccount,
-  MarketIndex,
-} from './api-types';
+import { getLiquidatableDolomiteAccounts } from '../clients/fringe';
+import { ApiAccount } from './api-types';
 import { delay } from './delay';
 import Logger from './logger';
-import MarketStore from './market-store';
 import Pageable from './pageable';
 
 export default class AccountStore {
-  public marketStore: MarketStore;
+  public liquidatableFringeAccounts: ApiAccount[];
 
-  public liquidatableDolomiteAccounts: ApiAccount[];
-  public expirableAccounts: ApiAccount[];
-
-  constructor(marketStore: MarketStore) {
-    this.marketStore = marketStore;
-    this.liquidatableDolomiteAccounts = [];
-    this.expirableAccounts = [];
+  constructor() {
+    this.liquidatableFringeAccounts = [];
   }
 
   public getLiquidatableDolomiteAccounts(): ApiAccount[] {
-    return this.liquidatableDolomiteAccounts;
-  }
-
-  public getExpirableDolomiteAccounts(): ApiAccount[] {
-    return this.expirableAccounts;
+    return this.liquidatableFringeAccounts;
   }
 
   start = () => {
@@ -42,8 +24,6 @@ export default class AccountStore {
   };
 
   _poll = async () => {
-    await delay(Number(process.env.MARKET_POLL_INTERVAL_MS)); // wait for the markets to initialize
-
     // noinspection InfiniteLoopJS
     for (; ;) {
       try {
@@ -66,60 +46,15 @@ export default class AccountStore {
       message: 'Updating accounts...',
     });
 
-    const blockNumber = this.marketStore.getBlockNumber();
-    if (blockNumber === 0) {
-      Logger.warn({
-        at: 'AccountStore#_update',
-        message: 'Block number from marketStore is 0, returning...',
-      });
-      return;
-    }
-
-    const marketMap = this.marketStore.getMarketMap();
-    const marketIndexMap = await this.getMarketIndexMap(marketMap, blockNumber);
-
-    const nextLiquidatableDolomiteAccounts = await Pageable.getPageableValues(async (pageIndex) => {
-      const { accounts } = await getLiquidatableDolomiteAccounts(marketIndexMap, blockNumber, pageIndex);
-      return accounts;
-    });
-    const nextExpirableAccounts = await Pageable.getPageableValues(async (pageIndex) => {
-      const { accounts } = await getExpiredAccounts(marketIndexMap, blockNumber, pageIndex);
-      return accounts;
-    });
-
     // don't set the field variables until both values have been retrieved from the network
-    this.liquidatableDolomiteAccounts = nextLiquidatableDolomiteAccounts;
-    this.expirableAccounts = nextExpirableAccounts;
+    this.liquidatableFringeAccounts = await Pageable.getPageableValues(async () => {
+      const { accounts } = await getLiquidatableDolomiteAccounts();
+      return accounts;
+    });
 
     Logger.info({
       at: 'AccountStore#_update',
       message: 'Finished updating accounts',
     });
   };
-
-  private async getMarketIndexMap(
-    marketMap: { [marketId: string]: any },
-    blockNumber: number,
-  ): Promise<{ [marketId: string]: MarketIndex }> {
-    const marketIds = Object.keys(marketMap);
-    const indexCalls = marketIds.map(marketId => {
-      return {
-        target: dolomite.contracts.dolomiteMargin.options.address,
-        callData: dolomite.contracts.dolomiteMargin.methods.getMarketCurrentIndex(marketId)
-          .encodeABI(),
-      };
-    });
-
-    const { results: indexResults } = await dolomite.multiCall.aggregate(indexCalls, { blockNumber });
-
-    return indexResults.reduce<{ [marketId: string]: MarketIndex }>((memo, rawIndexResult, i) => {
-      const decodedResults = dolomite.web3.eth.abi.decodeParameters(['uint256', 'uint256', 'uint256'], rawIndexResult);
-      memo[marketIds[i]] = {
-        marketId: Number(marketIds[i]),
-        borrow: new BigNumber(decodedResults[0]).div('1000000000000000000'),
-        supply: new BigNumber(decodedResults[1]).div('1000000000000000000'),
-      };
-      return memo;
-    }, {});
-  }
 }

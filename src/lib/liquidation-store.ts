@@ -27,6 +27,6 @@ export default class LiquidationStore {
   }
 
   private static _getKey(account: ApiAccount) {
-    return `${account.owner.toLowerCase()}-${account.number}`;
+    return `${account.owner.toLowerCase()}`;
   }
 }

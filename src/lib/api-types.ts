@@ -1,43 +1,11 @@
-import {
-  address,
-  Integer,
-} from '@dolomite-exchange/dolomite-margin';
-
-export interface ApiBalance {
-  marketId: number;
-  tokenAddress: string
-  tokenSymbol: string
-  par: Integer;
-  wei: Integer;
-  expiresAt: Integer | null;
-  expiryAddress: string | null;
-}
+import BigNumber from 'bignumber.js';
 
 export interface ApiAccount {
   id: string;
   owner: string;
-  number: Integer;
-  balances: {
-    [marketNumber: string]: ApiBalance;
-  };
-}
-
-export interface ApiMarket {
-  id: number
-  tokenAddress: string
-  oraclePrice: Integer
-  marginPremium: Integer
-  liquidationRewardPremium: Integer
-}
-
-export interface ApiRiskParam {
-  dolomiteMargin: address;
-  liquidationRatio: Integer;
-  liquidationReward: Integer;
-}
-
-export interface MarketIndex {
-  marketId: number
-  borrow: Integer
-  supply: Integer
+  lendingTokenAddress: string;
+  collateralTokenAddress: string;
+  // eslint-disable-next-line max-len
+  totalOutstanding: BigNumber; // value of the debt accrued. Liquidation reward is `totalOutstanding * (1.00 + reward_percent)`
+  healthFactor: BigNumber; // value of < 1 means it is liquidatable
 }

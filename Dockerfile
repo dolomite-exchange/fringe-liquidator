@@ -5,12 +5,12 @@ RUN apk update &&  \
     apk -Uuv add --no-cache make g++ git python py-pip jq openssh curl openssh docker &&  \
     pip install --upgrade pip awscli
 
-RUN adduser -S dolomite
-RUN mkdir -p /home/dolomite/app
-RUN chown dolomite -R /home/dolomite/app
-USER dolomite
+RUN adduser -S fringe
+RUN mkdir -p /home/fringe/app
+RUN chown fringe -R /home/fringe/app
+USER fringe
 
-WORKDIR /home/dolomite/app
+WORKDIR /home/fringe/app
 
 COPY ./.env* ./
 COPY ./package.json ./package-lock.json ./

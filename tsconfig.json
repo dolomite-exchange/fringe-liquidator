@@ -11,7 +11,7 @@
     "outDir": "build",
     "types": [
       "node",
-      "jest",
+      "jest"
     ],
     "skipLibCheck": true,
     "declaration": true,
@@ -31,6 +31,10 @@
   "include": [
     "__tests__/**/*.ts",
     "src/**/*.ts",
-    "environment.d.ts",
+    "environment.d.ts"
   ],
+  "exclude": [
+    "src/types/*.ts",
+    "src/types/factories/*.ts"
+  ]
 }
