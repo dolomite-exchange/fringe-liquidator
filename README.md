@@ -1,8 +1,8 @@
-<div style="text-align: center">
+<div style="text-align: center" align="center">
     <img src="https://d1fdloi71mui9q.cloudfront.net/MGdS5FKxT1mKvXFTRgSq_EGEicdODOa7Q2fJT" width="256" alt="Fringe Logo" />
 </div>
 
-<div style="text-align: center">
+<div style="text-align: center" align="center">
   <a href='https://hub.docker.com/r/dolomiteprotocol/fringe-liquidator' style="text-decoration:none;">
     <img src='https://img.shields.io/badge/docker-container-blue.svg?longCache=true' alt='Docker' />
   </a>
