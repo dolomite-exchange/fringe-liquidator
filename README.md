@@ -1,4 +1,6 @@
-<p style="text-align: center"><img src="https://d1fdloi71mui9q.cloudfront.net/MGdS5FKxT1mKvXFTRgSq_EGEicdODOa7Q2fJT" width="256" alt="Fringe Logo" /></p>
+<div style="text-align: center">
+    <img src="https://d1fdloi71mui9q.cloudfront.net/MGdS5FKxT1mKvXFTRgSq_EGEicdODOa7Q2fJT" width="256" alt="Fringe Logo" />
+</div>
 
 <div style="text-align: center">
   <a href='https://hub.docker.com/r/dolomiteprotocol/fringe-liquidator' style="text-decoration:none;">
