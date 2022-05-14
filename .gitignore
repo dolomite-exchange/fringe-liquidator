@@ -24,5 +24,3 @@ output.log
 
 .env.production
 *.production.env
-
-src/types
