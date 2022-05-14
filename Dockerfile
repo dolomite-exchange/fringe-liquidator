@@ -1,4 +1,4 @@
-FROM node:12.20.1-alpine
+FROM node:14.17.0-alpine
 
 RUN apk update &&  \
     apk upgrade && \
@@ -13,8 +13,8 @@ USER fringe
 WORKDIR /home/fringe/app
 
 COPY ./.env* ./
-COPY ./package.json ./package-lock.json ./
-RUN npm ci --loglevel warn
+COPY ./package.json ./yarn.lock ./
+RUN yarn install --frozen-lockfile
 
 COPY ./src ./src
 COPY ./__tests__ ./__tests__

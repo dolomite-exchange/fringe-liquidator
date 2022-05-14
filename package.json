@@ -1,5 +1,5 @@
 {
-  "name": "liquidator",
+  "name": "fringe-liquidator",
   "version": "1.0.0",
   "description": "Microservice to bid on Fringe liquidation auctions",
   "main": "build/src/index.js",
