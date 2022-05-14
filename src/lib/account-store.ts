@@ -1,4 +1,4 @@
-import { getLiquidatableDolomiteAccounts } from '../clients/fringe';
+import { getLiquidatableFringeAccounts } from '../clients/fringe';
 import { ApiAccount } from './api-types';
 import { delay } from './delay';
 import Logger from './logger';
@@ -11,7 +11,7 @@ export default class AccountStore {
     this.liquidatableFringeAccounts = [];
   }
 
-  public getLiquidatableDolomiteAccounts(): ApiAccount[] {
+  public getLiquidatableFringeAccounts(): ApiAccount[] {
     return this.liquidatableFringeAccounts;
   }
 
@@ -47,8 +47,8 @@ export default class AccountStore {
     });
 
     // don't set the field variables until both values have been retrieved from the network
-    this.liquidatableFringeAccounts = await Pageable.getPageableValues(async () => {
-      const { accounts } = await getLiquidatableDolomiteAccounts();
+    this.liquidatableFringeAccounts = await Pageable.getPageableValues(async (pageIndex) => {
+      const { accounts } = await getLiquidatableFringeAccounts(pageIndex);
       return accounts;
     });
 

@@ -40,8 +40,8 @@ export async function updateGasPrice() {
 
     lastPriceWei = totalWei;
   } else if ('priorityFee' in response) {
-    priorityFee = response.priorityFee.times('1000000000').toFixed();
-    maxFeePerGas = response.maxFeePerGas.times('1000000000').toFixed();
+    priorityFee = response.priorityFee.toFixed();
+    maxFeePerGas = response.maxFeePerGas.toFixed();
   } else {
     Logger.error({
       at: 'updateGasPrice',
@@ -85,11 +85,11 @@ async function getGasPrices(): Promise<{ fast: BigNumber } | { priorityFee: BigN
     })
       .then(response => response.json())
       .then(response => {
-        const OneGwei = new BigNumber('1000000000');
-        const estimatedPriceObject = response?.blockPrices?.[0].estimatedPrices?.[0].estimatedPrices?.[0];
+        const OneGweiInEther = new BigNumber('1000000000');
+        const estimatedPriceObject = response?.blockPrices?.[0].estimatedPrices?.[0];
         return {
-          priorityFee: new BigNumber(estimatedPriceObject.maxPriorityFeePerGas).times(OneGwei),
-          maxFeePerGas: new BigNumber(estimatedPriceObject.maxFeePerGas).times(OneGwei),
+          priorityFee: new BigNumber(estimatedPriceObject.maxPriorityFeePerGas).times(OneGweiInEther),
+          maxFeePerGas: new BigNumber(estimatedPriceObject.maxFeePerGas).times(OneGweiInEther),
         }
       });
   } else if (networkId === ChainId.Rinkeby) {

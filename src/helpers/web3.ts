@@ -1,4 +1,4 @@
-import ethers, { Wallet } from 'ethers';
+import { ethers, Wallet } from 'ethers';
 import { ChainId } from '../lib/chain-id';
 import Logger from '../lib/logger';
 

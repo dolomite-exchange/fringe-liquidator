@@ -20,7 +20,7 @@ export default class FringeLiquidator {
   start = () => {
     Logger.info({
       at: 'FringeLiquidator#start',
-      message: 'Starting DolomiteMargin liquidator',
+      message: 'Starting Fringe liquidator',
     });
     delay(Number(process.env.LIQUIDATE_POLL_INTERVAL_MS))
       .then(() => this._poll())
@@ -37,7 +37,7 @@ export default class FringeLiquidator {
   };
 
   _liquidateAccounts = async () => {
-    const liquidatableAccounts = this.accountStore.getLiquidatableDolomiteAccounts()
+    const liquidatableAccounts = this.accountStore.getLiquidatableFringeAccounts()
       .filter(account => !this.liquidationStore.contains(account))
       .filter(account => !this.isCollateralized(account));
 
@@ -70,6 +70,6 @@ export default class FringeLiquidator {
   isCollateralized = (
     account: ApiAccount,
   ): boolean => {
-    return account.healthFactor.lt('1');
+    return account.healthFactor.gte('1');
   };
 }

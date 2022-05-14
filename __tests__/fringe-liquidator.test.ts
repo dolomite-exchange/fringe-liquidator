@@ -1,11 +1,12 @@
 import BigNumber from 'bignumber.js';
-import { provider } from '../src/helpers/web3';
+import { getGasPriceWeiForEip1559, updateGasPrice } from '../src/helpers/gas-price-helpers';
 import AccountStore from '../src/lib/account-store';
 import { ApiAccount } from '../src/lib/api-types';
 import FringeLiquidator from '../src/lib/fringe-liquidator';
 import LiquidationStore from '../src/lib/liquidation-store';
+import * as fringeHelpers from '../src/helpers/fringe-helpers';
 
-describe('dolomite-liquidator', () => {
+describe('fringe-liquidator', () => {
   let accountStore: AccountStore;
   let liquidationStore: LiquidationStore;
   let fringeLiquidator: FringeLiquidator;
@@ -19,172 +20,64 @@ describe('dolomite-liquidator', () => {
 
   describe('#_liquidateAccounts', () => {
     it('Successfully liquidates accounts normally', async () => {
-      process.env.BRIDGE_TOKEN_ADDRESS = getTestMarkets()[0].tokenAddress;
-
       const liquidatableAccounts = getTestLiquidatableAccounts();
-      accountStore.getLiquidatableDolomiteAccounts = jest.fn().mockImplementation(() => liquidatableAccounts);
-
-      let commitCount = 0;
-      await fringeLiquidator._liquidateAccounts();
-
-      const sortedLiquidations = liquidatableAccounts.map((account: ApiAccount) => {
-        return liquidations.find((l) => l[2] === account.owner && l[3] === account.number);
-      });
-
-      expect(sortedLiquidations[0][0])
-        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
-
-      expect(sortedLiquidations[1][0])
-        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
-      expect(sortedLiquidations[1][5].toFixed())
-        .toBe(new BigNumber(process.env.MIN_OVERHEAD_VALUE).toFixed());
-      expect(sortedLiquidations[1][6])
-        .toEqual(process.env.OWED_PREFERENCES.split(',')
-          .map((p) => new BigNumber(p)));
-    });
-
-    it('Successfully liquidates accounts while selling collateral', async () => {
-      process.env.BRIDGE_TOKEN_ADDRESS = getTestMarkets()[0].tokenAddress; // WETH
-
-      const liquidatableAccounts = getTestLiquidatableAccounts();
-      const expiredAccounts = getTestExpiredAccounts();
-      const markets = getTestMarkets();
-      const riskParams = getTestRiskParams();
-      accountStore.getLiquidatableDolomiteAccounts = jest.fn().mockImplementation(() => liquidatableAccounts);
+      accountStore.getLiquidatableFringeAccounts = jest.fn().mockImplementation(() => liquidatableAccounts);
 
       const liquidations: any[] = [];
-      const liquidatableExpiredAccounts: any[] = [];
-      dolomite.liquidatorProxyWithAmm.liquidate = jest.fn().mockImplementation((...args) => {
-        if (args[7]) {
-          liquidatableExpiredAccounts.push(args);
-        } else {
-          liquidations.push(args);
-        }
-        return { gas: 1 };
+      // @ts-ignore
+      // noinspection JSConstantReassignment
+      fringeHelpers.liquidateAccount = jest.fn().mockImplementation((args) => {
+        liquidations.push(args);
       });
 
       await fringeLiquidator._liquidateAccounts();
 
-      expect(liquidations.length)
-        .toBe(liquidatableAccounts.length);
-      expect(liquidatableExpiredAccounts.length)
-        .toBe(1);
-
       const sortedLiquidations = liquidatableAccounts.map((account: ApiAccount) => {
-        return liquidations.find((l) => l[2] === account.owner && l[3] === account.number);
+        return liquidations.find((l) => (l as ApiAccount).id === account.id);
       });
 
-      const discount = INTEGERS.ONE;
+      expect(sortedLiquidations[0]).toBe(liquidatableAccounts[0]);
+      expect(sortedLiquidations[1]).toBe(liquidatableAccounts[1]);
+    });
 
-      expect(sortedLiquidations[0][0])
-        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
-      expect(sortedLiquidations[0][4].toFixed())
-        .toBe(/* owedMarket */ liquidatableAccounts[0].balances[1].marketId.toString());
-      expect(sortedLiquidations[0][5].toFixed())
-        .toBe(/* heldMarket */ liquidatableAccounts[0].balances[0].marketId.toString());
-      expect(sortedLiquidations[0][6])
-        .toEqual([
-          liquidatableAccounts[0].balances[0].tokenAddress,
-          process.env.BRIDGE_TOKEN_ADDRESS,
-          liquidatableAccounts[0].balances[1].tokenAddress,
-        ]);
-      expect(sortedLiquidations[0][7])
-        .toEqual(null);
-      expect(sortedLiquidations[0][8])
-        .toEqual(liquidatableAccounts[0].balances[1].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
+    it('Should get gas price without a problem from Blocknative', async () => {
+      // The API key is in the .env.production file, so we must load it in here.
+      process.env.NODE_ENV = 'production';
+      require('dotenv-flow').config();
+      process.env.NETWORK_ID = '1';
+      await updateGasPrice();
+      const gasFees = getGasPriceWeiForEip1559();
+      expect(gasFees).toBeDefined();
 
-      expect(sortedLiquidations[1][0])
-        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
-      expect(sortedLiquidations[1][4].toFixed())
-        .toBe(/* owedMarket */ liquidatableAccounts[0].balances[0].marketId.toString());
-      expect(sortedLiquidations[1][5].toFixed())
-        .toBe(/* heldMarket */ liquidatableAccounts[0].balances[1].marketId.toString());
-      expect(sortedLiquidations[1][6])
-        .toEqual([
-          liquidatableAccounts[0].balances[1].tokenAddress,
-          process.env.BRIDGE_TOKEN_ADDRESS,
-          liquidatableAccounts[0].balances[0].tokenAddress,
-        ]);
-      expect(sortedLiquidations[1][7])
-        .toEqual(null);
-      expect(sortedLiquidations[1][8])
-        .toEqual(liquidatableAccounts[1].balances[0].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
-
-      expect(liquidatableExpiredAccounts[0][0])
-        .toBe(process.env.ACCOUNT_WALLET_ADDRESS);
-      expect(liquidatableExpiredAccounts[0][2])
-        .toEqual(expiredAccounts[0].owner); // liquidAccountOwner
-      expect(liquidatableExpiredAccounts[0][3])
-        .toEqual(expiredAccounts[0].number); // liquidAccountNumber
-      expect(liquidatableExpiredAccounts[0][4].toFixed())
-        .toBe(/* owedMarket */ expiredAccounts[0].balances[2].marketId.toString());
-      expect(liquidatableExpiredAccounts[0][5].toFixed())
-        .toBe(/* heldMarket */ expiredAccounts[0].balances[1].marketId.toString());
-      expect(liquidatableExpiredAccounts[0][6])
-        .toEqual([
-          expiredAccounts[0].balances[1].tokenAddress,
-          process.env.BRIDGE_TOKEN_ADDRESS,
-          expiredAccounts[0].balances[2].tokenAddress,
-        ]);
-      expect(liquidatableExpiredAccounts[0][7])
-        .toEqual(expiredAccounts[0].balances[2].expiresAt);
-      expect(liquidatableExpiredAccounts[0][8])
-        .toEqual(expiredAccounts[0].balances[2].wei.abs().times(discount).integerValue(BigNumber.ROUND_FLOOR));
+      const oneEth = new BigNumber('1000000000000000000');
+      const oneGwei = new BigNumber('1000000000');
+      expect(gasFees?.maxFeePerGas.gt(oneGwei)).toEqual(true);
+      expect(gasFees?.maxFeePerGas.lt(oneEth)).toEqual(true);
+      expect(gasFees?.priorityFee.gt(oneGwei)).toEqual(true);
+      expect(gasFees?.priorityFee.lt(oneEth)).toEqual(true);
     });
   });
 });
 
 function getTestLiquidatableAccounts(): ApiAccount[] {
+  const weth = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+  const usdc = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
   return [
     {
-      id: '0x78F4529554137A9015dC653758aB600aBC2ffD48-0',
+      id: '0x78F4529554137A9015dC653758aB600aBC2ffD48',
       owner: '0x78F4529554137A9015dC653758aB600aBC2ffD48',
-      number: new BigNumber('0'),
-      balances: {
-        0: {
-          par: new BigNumber('100'),
-          wei: new BigNumber('200'),
-          marketId: 0,
-          tokenAddress: '0x0000000000000000000000000000000000000000',
-          tokenSymbol: 'ETH',
-          expiresAt: null,
-          expiryAddress: null,
-        },
-        1: {
-          par: new BigNumber('-15573'),
-          wei: new BigNumber('-31146'),
-          marketId: 1,
-          tokenAddress: '0x0000000000000000000000000000000000000001',
-          tokenSymbol: 'USDC',
-          expiresAt: null,
-          expiryAddress: null,
-        },
-      },
+      lendingTokenAddress: usdc,
+      collateralTokenAddress: weth,
+      totalOutstanding: new BigNumber('6000.42'),
+      healthFactor: new BigNumber('0.98'),
     },
     {
-      id: '0x78F4529554137A9015dC653758aB600aBC2ffD48-1',
-      owner: '0x78F4529554137A9015dC653758aB600aBC2ffD48',
-      number: new BigNumber('1'),
-      balances: {
-        0: {
-          par: new BigNumber('-1010101010101010010101010010101010101001010'),
-          wei: new BigNumber('-2010101010101010010101010010101010101001010'),
-          marketId: 0,
-          tokenAddress: '0x0000000000000000000000000000000000000000',
-          tokenSymbol: 'ETH',
-          expiresAt: null,
-          expiryAddress: null,
-        },
-        1: {
-          par: new BigNumber('1010101010101010010101010010101010101001010'),
-          wei: new BigNumber('2010101010101010010101010010101010101001010'),
-          marketId: 1,
-          tokenAddress: '0x0000000000000000000000000000000000000001',
-          tokenSymbol: 'USDC',
-          expiresAt: null,
-          expiryAddress: null,
-        },
-      },
+      id: '0x48F4529554137A9015dC653758aB600aBC2ffD48',
+      owner: '0x48F4529554137A9015dC653758aB600aBC2ffD48',
+      lendingTokenAddress: usdc,
+      collateralTokenAddress: weth,
+      totalOutstanding: new BigNumber('124000.25'),
+      healthFactor: new BigNumber('0.95'),
     },
   ];
 }

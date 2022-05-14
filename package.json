@@ -1,7 +1,7 @@
 {
   "name": "liquidator",
   "version": "1.0.0",
-  "description": "Microservice to bid on Dolomite liquidation auctions",
+  "description": "Microservice to bid on Fringe liquidation auctions",
   "main": "build/src/index.js",
   "scripts": {
     "test": "NODE_ENV=test jest --runInBand",

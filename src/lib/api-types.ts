@@ -5,7 +5,12 @@ export interface ApiAccount {
   owner: string;
   lendingTokenAddress: string;
   collateralTokenAddress: string;
-  // eslint-disable-next-line max-len
-  totalOutstanding: BigNumber; // value of the debt accrued. Liquidation reward is `totalOutstanding * (1.00 + reward_percent)`
-  healthFactor: BigNumber; // value of < 1 means it is liquidatable
+  /**
+   * The value of the debt accrued. Liquidation reward is `totalOutstanding * (1.00 + reward_percent)`
+   */
+  totalOutstanding: BigNumber;
+  /**
+   * A value less than 1 means it is liquidatable
+   */
+  healthFactor: BigNumber;
 }

@@ -6,9 +6,9 @@ import { RinkebyLiquidator, RinkebyLiquidator__factory } from '../types';
 import { getGasPriceWei, getGasPriceWeiForEip1559 } from './gas-price-helpers';
 import { signer } from './web3';
 
-export async function liquidateAccount(
+export const liquidateAccount = async (
   liquidAccount: ApiAccount,
-): Promise<ContractTransaction | undefined> {
+): Promise<ContractTransaction | undefined> => {
   if (process.env.LIQUIDATIONS_ENABLED !== 'true') {
     return undefined;
   }

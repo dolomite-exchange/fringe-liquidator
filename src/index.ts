@@ -21,11 +21,11 @@ import Logger from './lib/logger';
 checkDuration('ACCOUNT_POLL_INTERVAL_MS', 1000);
 checkEthereumAddress('ACCOUNT_WALLET_ADDRESS');
 checkPrivateKey('ACCOUNT_WALLET_PRIVATE_KEY');
-checkEthereumAddress('BRIDGE_TOKEN_ADDRESS');
 checkExists('ETHEREUM_NODE_URL');
 checkEthereumAddress('FRINGE_ADDRESS');
 checkBigNumber('GAS_PRICE_MULTIPLIER');
 checkDuration('GAS_PRICE_POLL_INTERVAL_MS', 1000);
+checkExists('GAS_REQUEST_API_KEY');
 checkDuration('LIQUIDATE_POLL_INTERVAL_MS', 1000);
 checkDuration('LIQUIDATION_KEY_EXPIRATION_SECONDS', 1, /* isMillis = */ false);
 checkBooleanValue('LIQUIDATIONS_ENABLED');
@@ -52,7 +52,6 @@ async function start() {
   Logger.info({
     message: 'Fringe data',
     accountWalletAddress: process.env.ACCOUNT_WALLET_ADDRESS,
-    bridgeTokenAddress: process.env.BRIDGE_TOKEN_ADDRESS,
     ethereumNodeUrl: process.env.ETHEREUM_NODE_URL,
     fringeAddress: process.env.FRINGE_ADDRESS,
     gasPriceMultiplier: process.env.GAS_PRICE_MULTIPLIER,

@@ -3,7 +3,7 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       ACCOUNT_WALLET_ADDRESS: string,
-      BRIDGE_TOKEN_ADDRESS: string,
+      FRINGE_ADDRESS: string,
       GAS_PRICE_ADDITION: string,
       GAS_PRICE_MULTIPLIER: string,
       GAS_REQUEST_API_KEY: string,

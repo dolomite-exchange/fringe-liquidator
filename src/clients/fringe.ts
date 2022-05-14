@@ -4,14 +4,25 @@ import fetch from 'node-fetch';
 import { ApiAccount } from '../lib/api-types';
 import { AccountResult } from '../lib/graphql-types';
 
-export async function getLiquidatableDolomiteAccounts(): Promise<{ accounts: ApiAccount[] }> {
-  const accounts: ApiAccount[] = await fetch('https://api.fringe.fi/api/v1/liquidations', {
+/**
+ * This is an `export const` so it can be mocked easily for testing
+ */
+export const getLiquidatableFringeAccountsFromNetwork = async (): Promise<any> => {
+  return fetch('https://api.fringe.fi/api/v1/liquidations', {
     method: 'GET',
     headers: {
       'content-type': 'application/json',
     },
   })
     .then(response => response.json())
+}
+
+export async function getLiquidatableFringeAccounts(pageIndex: number): Promise<{ accounts: ApiAccount[] }> {
+  if (pageIndex >= 1) {
+    return Promise.resolve({ accounts: [] });
+  }
+
+  const accounts: ApiAccount[] = await getLiquidatableFringeAccountsFromNetwork()
     .then((response: any) => {
       if (response.errors && typeof response.errors === 'object') {
         return Promise.reject((response.errors as any)[0]);

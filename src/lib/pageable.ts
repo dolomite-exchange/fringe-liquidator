@@ -1,5 +1,4 @@
 export default class Pageable {
-
   public static async getPageableValues<T>(
     getterFn: (pageIndex: number) => Promise<T[]>,
   ): Promise<T[]> {
@@ -18,5 +17,4 @@ export default class Pageable {
 
     return results
   }
-
 }
