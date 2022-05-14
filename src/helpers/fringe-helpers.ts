@@ -63,7 +63,7 @@ async function liquidateAccountInternal(
   const gasPrice = getGasPriceWei();
 
   const liquidationContract = new BaseContract(
-    process.env.FRINGE_ADDRESS as string,
+    process.env.FRINGE_LIQUIDATOR_ADDRESS as string,
     RinkebyLiquidator__factory.createInterface(),
     signer(),
   ) as RinkebyLiquidator;
