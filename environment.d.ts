@@ -10,6 +10,7 @@ declare global {
       INITIAL_GAS_PRICE_WEI: string,
       ETHEREUM_NODE_URL: string,
       LIQUIDATION_KEY_EXPIRATION_SECONDS: string,
+      PRICE_POLL_INTERVAL_MS: string,
       SEQUENTIAL_TRANSACTION_DELAY_MS: string,
     }
   }

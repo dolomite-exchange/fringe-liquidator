@@ -1,17 +1,25 @@
 import BigNumber from 'bignumber.js';
 import AccountStore from '../src/lib/account-store';
 import * as FringeClient from '../src/clients/fringe';
+import PriceStore from '../src/lib/price-store';
 
 describe('fringe-liquidator', () => {
+  let priceStore: PriceStore;
   let accountStore: AccountStore;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    accountStore = new AccountStore();
+    priceStore = new PriceStore();
+    accountStore = new AccountStore(priceStore);
   });
 
   describe('#_update', () => {
     it('Successfully gets liquidatable accounts normally', async () => {
+      await priceStore._update();
+      const priceMap = priceStore.getPrices();
+      expect(priceMap).toBeDefined();
+      expect(priceMap?.[PriceStore.ETH]).toBeDefined();
+
       // @ts-ignore
       // noinspection JSConstantReassignment
       FringeClient.getLiquidatableFringeAccountsFromNetwork = jest.fn().mockImplementation(() => {
@@ -28,6 +36,7 @@ describe('fringe-liquidator', () => {
       expect(liquidatableAccounts[0].collateralTokenAddress).toEqual('0x40ea2e5c5b2104124944282d8db39c5d13ac6770');
       expect(liquidatableAccounts[0].totalOutstanding).toEqual(new BigNumber('44.444623'));
       expect(liquidatableAccounts[0].healthFactor.gte('1')).toEqual(true);
+      expect(liquidatableAccounts[0].liquidationRewardGasToken.gte('1000000000000')).toEqual(true);
     });
   });
 });

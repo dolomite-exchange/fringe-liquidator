@@ -17,6 +17,7 @@ import {
 } from './lib/invariants';
 import LiquidationStore from './lib/liquidation-store';
 import Logger from './lib/logger';
+import PriceStore from './lib/price-store';
 
 checkDuration('ACCOUNT_POLL_INTERVAL_MS', 1000);
 checkEthereumAddress('ACCOUNT_WALLET_ADDRESS');
@@ -30,10 +31,12 @@ checkDuration('LIQUIDATE_POLL_INTERVAL_MS', 1000);
 checkDuration('LIQUIDATION_KEY_EXPIRATION_SECONDS', 1, /* isMillis = */ false);
 checkBooleanValue('LIQUIDATIONS_ENABLED');
 checkJsNumber('NETWORK_ID');
+checkDuration('PRICE_POLL_INTERVAL_MS', 1000);
 checkDuration('SEQUENTIAL_TRANSACTION_DELAY_MS', 10);
 
 async function start() {
-  const accountStore = new AccountStore();
+  const priceStore = new PriceStore();
+  const accountStore = new AccountStore(priceStore);
   const liquidationStore = new LiquidationStore();
   const fringeLiquidator = new FringeLiquidator(accountStore, liquidationStore);
   const gasPriceUpdater = new GasPriceUpdater();
@@ -69,9 +72,11 @@ async function start() {
     accountPollIntervalMillis: process.env.ACCOUNT_POLL_INTERVAL_MS,
     gasPricePollInterval: process.env.GAS_PRICE_POLL_INTERVAL_MS,
     liquidatePollIntervalMillis: process.env.LIQUIDATE_POLL_INTERVAL_MS,
+    pricePollIntervalMillis: process.env.PRICE_POLL_INTERVAL_MS,
   });
 
   accountStore.start();
+  priceStore.start();
   gasPriceUpdater.start();
 
   if (process.env.LIQUIDATIONS_ENABLED === 'true') {

@@ -5,15 +5,18 @@ import { ApiAccount } from '../src/lib/api-types';
 import FringeLiquidator from '../src/lib/fringe-liquidator';
 import LiquidationStore from '../src/lib/liquidation-store';
 import * as fringeHelpers from '../src/helpers/fringe-helpers';
+import PriceStore from '../src/lib/price-store';
 
 describe('fringe-liquidator', () => {
   let accountStore: AccountStore;
+  let priceStore: PriceStore;
   let liquidationStore: LiquidationStore;
   let fringeLiquidator: FringeLiquidator;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    accountStore = new AccountStore();
+    priceStore = new PriceStore();
+    accountStore = new AccountStore(priceStore);
     liquidationStore = new LiquidationStore();
     fringeLiquidator = new FringeLiquidator(accountStore, liquidationStore);
   });
@@ -70,6 +73,7 @@ function getTestLiquidatableAccounts(): ApiAccount[] {
       collateralTokenAddress: weth,
       totalOutstanding: new BigNumber('6000.42'),
       healthFactor: new BigNumber('0.98'),
+      liquidationRewardGasToken: new BigNumber('100000000000000000'),
     },
     {
       id: '0x48F4529554137A9015dC653758aB600aBC2ffD48',
@@ -78,6 +82,7 @@ function getTestLiquidatableAccounts(): ApiAccount[] {
       collateralTokenAddress: weth,
       totalOutstanding: new BigNumber('124000.25'),
       healthFactor: new BigNumber('0.95'),
+      liquidationRewardGasToken: new BigNumber('100000000000000000'),
     },
   ];
 }

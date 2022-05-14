@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js';
 import { BaseContract, ContractTransaction } from 'ethers';
 import { ApiAccount } from '../lib/api-types';
 import { ChainId } from '../lib/chain-id';
@@ -23,15 +24,24 @@ export const liquidateAccount = async (
   });
 
   try {
-    const transaction: ContractTransaction = await liquidateAccountInternal(liquidAccount);
-    Logger.info({
-      at: 'fringe-helpers#liquidateAccount',
-      message: 'Transaction information',
-      transactionHash: transaction.hash,
-      gasPrice: transaction.gasPrice?.toString(),
-      maxFeePerGas: transaction.maxFeePerGas?.toString(),
-      maxPriorityFeePerGas: transaction.maxPriorityFeePerGas?.toString(),
-    });
+    const { transaction, totalGasSpent } = await liquidateAccountInternal(liquidAccount);
+    if (transaction) {
+      Logger.info({
+        at: 'fringe-helpers#liquidateAccount',
+        message: 'Transaction information',
+        transactionHash: transaction.hash,
+        gasPrice: transaction.gasPrice?.toString(),
+        maxFeePerGas: transaction.maxFeePerGas?.toString(),
+        maxPriorityFeePerGas: transaction.maxPriorityFeePerGas?.toString(),
+      });
+    } else if (totalGasSpent) {
+      Logger.info({
+        at: 'fringe-helpers#liquidateAccount',
+        message: 'Liquidation was not profitable enough',
+        liquidationRewardGasToken: liquidAccount.liquidationRewardGasToken.toFixed(),
+        totalGasSpent: totalGasSpent.toFixed(),
+      });
+    }
     return transaction
   } catch (e) {
     Logger.info({
@@ -45,7 +55,10 @@ export const liquidateAccount = async (
 
 async function liquidateAccountInternal(
   liquidAccount: ApiAccount,
-): Promise<ContractTransaction> {
+): Promise<{
+    transaction: ContractTransaction | undefined;
+    totalGasSpent: BigNumber | undefined;
+  }> {
   const eip1559GasPrice = getGasPriceWeiForEip1559();
   const gasPrice = getGasPriceWei();
 
@@ -69,7 +82,20 @@ async function liquidateAccountInternal(
       maxFeePerGas: eip1559GasPrice?.maxFeePerGas.toFixed(),
       maxPriorityFeePerGas: eip1559GasPrice?.priorityFee.toFixed(),
     }
-    return liquidationContract.liquidate(
+    let totalGasSpent: BigNumber;
+    if (gasPriceData.gasPrice) {
+      totalGasSpent = new BigNumber(gasLimit.toString()).times(gasPriceData.gasPrice);
+    } else if (gasPriceData.maxFeePerGas && gasPriceData.maxPriorityFeePerGas) {
+      const totalGasPrice = new BigNumber(gasPriceData.maxFeePerGas).plus(gasPriceData.maxPriorityFeePerGas);
+      totalGasSpent = new BigNumber(gasLimit.toString()).times(totalGasPrice);
+    } else {
+      return Promise.reject(new Error('Gas price data not set. How?'));
+    }
+    if (totalGasSpent.gt(liquidAccount.liquidationRewardGasToken)) {
+      return Promise.resolve({ totalGasSpent, transaction: undefined });
+    }
+
+    const transaction = await liquidationContract.liquidate(
       liquidAccount.owner,
       liquidAccount.collateralTokenAddress,
       liquidAccount.lendingTokenAddress,
@@ -79,6 +105,7 @@ async function liquidateAccountInternal(
         ...gasPriceData,
       },
     );
+    return { transaction, totalGasSpent: undefined };
   } catch (e) {
     return Promise.reject(new Error(`Could not get gas limit for liquidation: ${JSON.stringify(liquidAccount)}`));
   }

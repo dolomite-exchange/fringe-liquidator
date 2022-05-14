@@ -3,12 +3,15 @@ import { ApiAccount } from './api-types';
 import { delay } from './delay';
 import Logger from './logger';
 import Pageable from './pageable';
+import PriceStore from './price-store';
 
 export default class AccountStore {
   public liquidatableFringeAccounts: ApiAccount[];
+  private priceStore: PriceStore;
 
-  constructor() {
+  constructor(priceStore: PriceStore) {
     this.liquidatableFringeAccounts = [];
+    this.priceStore = priceStore;
   }
 
   public getLiquidatableFringeAccounts(): ApiAccount[] {
@@ -46,9 +49,18 @@ export default class AccountStore {
       message: 'Updating accounts...',
     });
 
+    const symbolToPricesMap = this.priceStore.getPrices();
+    if (!symbolToPricesMap) {
+      Logger.info({
+        at: 'AccountStore#_update',
+        message: 'Prices are empty. Returning...',
+      });
+      return;
+    }
+
     // don't set the field variables until both values have been retrieved from the network
     this.liquidatableFringeAccounts = await Pageable.getPageableValues(async (pageIndex) => {
-      const { accounts } = await getLiquidatableFringeAccounts(pageIndex);
+      const { accounts } = await getLiquidatableFringeAccounts(pageIndex, symbolToPricesMap);
       return accounts;
     });
 
