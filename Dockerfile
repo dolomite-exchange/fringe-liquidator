@@ -21,6 +21,6 @@ COPY ./__tests__ ./__tests__
 COPY ./tsconfig.json ./tsconfig.json
 COPY ./environment.d.ts ./environment.d.ts
 
-RUN npm run build
+# RUN npm run build
 
 CMD ["npm", "start"]

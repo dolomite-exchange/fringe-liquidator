@@ -48,6 +48,7 @@ export const liquidateAccount = async (
       at: 'fringe-helpers#liquidateAccount',
       message: 'Account is not liquidatable',
       accountOwner: liquidAccount.owner,
+      errorMessage: e.message,
     });
     return undefined;
   }
@@ -70,13 +71,19 @@ async function liquidateAccountInternal(
 
   const flashLoanAddress = getFlashLoanAddress(liquidAccount);
 
+  let gasLimit;
   try {
-    const gasLimit = await liquidationContract.estimateGas.liquidate(
+    gasLimit = await liquidationContract.estimateGas.liquidate(
       liquidAccount.owner,
       liquidAccount.collateralTokenAddress,
       liquidAccount.lendingTokenAddress,
       flashLoanAddress,
     );
+  } catch (e) {
+    return Promise.reject(e);
+  }
+
+  try {
     const gasPriceData = {
       gasPrice: eip1559GasPrice ? undefined : gasPrice.toFixed(),
       maxFeePerGas: eip1559GasPrice?.maxFeePerGas.toFixed(),
@@ -107,7 +114,7 @@ async function liquidateAccountInternal(
     );
     return { transaction, totalGasSpent: undefined };
   } catch (e) {
-    return Promise.reject(new Error(`Could not get gas limit for liquidation: ${JSON.stringify(liquidAccount)}`));
+    return Promise.reject(e);
   }
 }
 

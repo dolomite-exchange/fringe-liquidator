@@ -67,7 +67,7 @@ function getTestLiquidatableAccounts(): ApiAccount[] {
   const usdc = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
   return [
     {
-      id: '0x78F4529554137A9015dC653758aB600aBC2ffD48',
+      id: `0x78F4529554137A9015dC653758aB600aBC2ffD48-${usdc}-${weth}`,
       owner: '0x78F4529554137A9015dC653758aB600aBC2ffD48',
       lendingTokenAddress: usdc,
       collateralTokenAddress: weth,
@@ -76,7 +76,7 @@ function getTestLiquidatableAccounts(): ApiAccount[] {
       liquidationRewardGasToken: new BigNumber('100000000000000000'),
     },
     {
-      id: '0x48F4529554137A9015dC653758aB600aBC2ffD48',
+      id: `0x48F4529554137A9015dC653758aB600aBC2ffD48-${usdc}-${weth}`,
       owner: '0x48F4529554137A9015dC653758aB600aBC2ffD48',
       lendingTokenAddress: usdc,
       collateralTokenAddress: weth,

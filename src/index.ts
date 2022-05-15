@@ -23,10 +23,13 @@ checkDuration('ACCOUNT_POLL_INTERVAL_MS', 1000);
 checkEthereumAddress('ACCOUNT_WALLET_ADDRESS');
 checkPrivateKey('ACCOUNT_WALLET_PRIVATE_KEY');
 checkExists('ETHEREUM_NODE_URL');
+checkExists('FRINGE_LIQUIDATIONS_URL');
 checkEthereumAddress('FRINGE_LIQUIDATOR_ADDRESS');
+checkBigNumber('GAS_PRICE_ADDITION');
 checkBigNumber('GAS_PRICE_MULTIPLIER');
 checkDuration('GAS_PRICE_POLL_INTERVAL_MS', 1000);
 checkExists('GAS_REQUEST_API_KEY');
+checkBigNumber('INITIAL_GAS_PRICE_WEI');
 checkDuration('LIQUIDATE_POLL_INTERVAL_MS', 1000);
 checkDuration('LIQUIDATION_KEY_EXPIRATION_SECONDS', 1, /* isMillis = */ false);
 checkBooleanValue('LIQUIDATIONS_ENABLED');
@@ -56,7 +59,8 @@ async function start() {
     message: 'Fringe data',
     accountWalletAddress: process.env.ACCOUNT_WALLET_ADDRESS,
     ethereumNodeUrl: process.env.ETHEREUM_NODE_URL,
-    fringeAddress: process.env.FRINGE_LIQUIDATOR_ADDRESS,
+    fringeLiquidationsUrl: process.env.FRINGE_LIQUIDATIONS_URL,
+    fringeLiquidatorAddress: process.env.FRINGE_LIQUIDATOR_ADDRESS,
     gasPriceMultiplier: process.env.GAS_PRICE_MULTIPLIER,
     gasPriceAddition: process.env.GAS_PRICE_ADDITION,
     heapSize: `${v8.getHeapStatistics().heap_size_limit / (1024 * 1024)} MB`,

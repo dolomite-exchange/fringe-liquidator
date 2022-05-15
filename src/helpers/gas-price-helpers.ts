@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import { ChainId } from '../lib/chain-id';
 import Logger from '../lib/logger';
 
-let lastPriceWei: string = process.env.INITIAL_GAS_PRICE_WEI;
+let lastPriceWei: string = process.env.INITIAL_GAS_PRICE_WEI as string;
 let priorityFee: string | undefined;
 let maxFeePerGas: string | undefined;
 
@@ -22,8 +22,8 @@ export async function updateGasPrice() {
   }
 
   if ('fast' in response) {
-    const multiplier = new BigNumber(process.env.GAS_PRICE_MULTIPLIER);
-    const addition = new BigNumber(process.env.GAS_PRICE_ADDITION);
+    const multiplier = new BigNumber(process.env.GAS_PRICE_MULTIPLIER as string);
+    const addition = new BigNumber(process.env.GAS_PRICE_ADDITION as string);
     const networkId = Number(process.env.NETWORK_ID)
     const base = networkId === ChainId.Ethereum ? 100_000_000 : 1_000_000_000;
     const totalWei = new BigNumber(response.fast)
@@ -67,7 +67,7 @@ async function getGasPrices(): Promise<{ fast: BigNumber } | { priorityFee: BigN
   });
 
   const networkId = Number(process.env.NETWORK_ID);
-  if (networkId === ChainId.Ethereum) {
+  if (networkId === ChainId.Ethereum || networkId === ChainId.Rinkeby) {
     if (!process.env.GAS_REQUEST_API_KEY) {
       Logger.error({
         at: 'getGasPrices',
@@ -92,11 +92,6 @@ async function getGasPrices(): Promise<{ fast: BigNumber } | { priorityFee: BigN
           maxFeePerGas: new BigNumber(estimatedPriceObject.maxFeePerGas).times(OneGweiInEther),
         }
       });
-  } else if (networkId === ChainId.Rinkeby) {
-    return Promise.resolve({
-      priorityFee: new BigNumber('1000000000'),
-      maxFeePerGas: new BigNumber('1000000000'),
-    });
   } else if (networkId === ChainId.Matic || networkId === ChainId.Mumbai) {
     const uri = networkId === ChainId.Matic
       ? 'https://gasstation-mainnet.matic.network/'

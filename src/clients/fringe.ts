@@ -12,7 +12,7 @@ const LiquidationReward = new BigNumber('0.06'); // 6%
  * This is an `export const` so it can be mocked easily for testing
  */
 export const getLiquidatableFringeAccountsFromNetwork = async (): Promise<any> => {
-  return fetch('https://api.fringe.fi/api/v1/liquidations', {
+  return fetch(`${process.env.FRINGE_LIQUIDATIONS_URL}/api/v1/liquidations` as string, {
     method: 'GET',
     headers: {
       'content-type': 'application/json',
@@ -45,7 +45,7 @@ export async function getLiquidatableFringeAccounts(
     .then(accountsResult => accountsResult.map<ApiAccount>(account => {
       const totalDebt = new BigNumber(account.totalOutstanding);
       return {
-        id: `0x${account.address}`,
+        id: `0x${account.address}-0x${account.lendingTokenAddress}-0x${account.collateralTokenAddress}`,
         owner: `0x${account.address}`,
         lendingTokenAddress: `0x${account.lendingTokenAddress}`,
         collateralTokenAddress: `0x${account.collateralTokenAddress}`,

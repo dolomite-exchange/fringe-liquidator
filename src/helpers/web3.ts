@@ -2,8 +2,6 @@ import { ethers, Wallet } from 'ethers';
 import { ChainId } from '../lib/chain-id';
 import Logger from '../lib/logger';
 
-const accountWalletAddress = process.env.ACCOUNT_WALLET_ADDRESS.toLowerCase();
-
 export const provider = new ethers.providers.JsonRpcProvider(process.env.ETHEREUM_NODE_URL);
 let wallet: Wallet;
 
@@ -28,21 +26,13 @@ export async function loadAccounts() {
 
   wallet = new ethers.Wallet(process.env.ACCOUNT_WALLET_PRIVATE_KEY, provider)
 
-  if (!process.env.ACCOUNT_WALLET_ADDRESS) {
-    const errorMessage = 'ACCOUNT_WALLET_ADDRESS is not provided';
-    Logger.error({
-      at: 'web3#loadAccounts',
-      message: errorMessage,
-    });
-    return Promise.reject(new Error(errorMessage));
-  }
-
+  const accountWalletAddress = process.env.ACCOUNT_WALLET_ADDRESS?.toLowerCase();
   if (wallet.address.toLowerCase() !== accountWalletAddress) {
     Logger.error({
       at: 'web3#loadAccounts',
       message: 'Owner private key does not match ENV variable address',
       privateKeyResolvesTo: wallet.address.toLowerCase(),
-      environmentVariable: accountWalletAddress.toLowerCase(),
+      environmentVariable: accountWalletAddress,
     });
     return Promise.reject(new Error('Owner private key does not match address'));
   }
