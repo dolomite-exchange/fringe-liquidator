@@ -43,8 +43,11 @@ This service will automatically liquidate undercollateralized accounts on Fringe
 
 This bot works for Fringe (Margin) accounts. Use the envvars `LIQUIDATIONS_ENABLED`, 
 
-**Liquidations on Fringe happen between Accounts, but this bot uses flash loans to automatically close out under-
-water accounts. You can also fund your Fringe Account on [app.fringe.fi](https://app.fringe.fi).**
+**Liquidations on Fringe happen between a liquidation wallet and an account on Fringe. This bot uses flash loans to 
+automatically close out underwater accounts. You can also fund your Fringe Account on 
+[app.fringe.fi](https://app.fringe.fi). The current version of Fringe requires that the liquidator have the appropriate 
+amount of USDC in the wallet with an allowance set on Fringe's Primary Lending Platform contract address in order to 
+successfully process the liquidation.**
 
 
 ## Configuration
@@ -54,7 +57,7 @@ water accounts. You can also fund your Fringe Account on [app.fringe.fi](https:/
 | ENV Variable                       | Description                                                                                                                                                                                                                                                                                                                  |
 |------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ACCOUNT_POLL_INTERVAL_MS           | How frequently to poll for liquidatable accounts. Defaults to `5000` milliseconds.                                                                                                                                                                                                                                           |
-| ACCOUNT_WALLET_ADDRESS             | **REQUIRED** Ethereum address of the Fringe account owner that will do the liquidations.                                                                                                                                                                                                                                     |
+| ACCOUNT_WALLET_ADDRESS             | **REQUIRED** Ethereum address of the wallet that will perform the liquidations.                                                                                                                                                                                                                                              |
 | ACCOUNT_WALLET_PRIVATE_KEY         | **REQUIRED** Ethereum private key the Fringe account owner that will do the liquidations. Make sure that "0x" is at the start of it (MetaMask exports private keys without it).                                                                                                                                              |
 | ETHEREUM_NODE_URL                  | **REQUIRED** The URL of the Ethereum node to use (e.g. an [Alchemy](https://alchemy.com) or [Infura](https://infura.io/) endpoint).                                                                                                                                                                                          |
 | FRINGE_LIQUIDATIONS_URL            | **REQUIRED** The API URL that returns Fringe account data, needed to perform liquidations. For example, `https://api.fringe.fi`.                                                                                                                                                                                             |
