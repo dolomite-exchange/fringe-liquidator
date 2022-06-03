@@ -37,6 +37,14 @@ checkJsNumber('NETWORK_ID');
 checkDuration('PRICE_POLL_INTERVAL_MS', 1000);
 checkDuration('SEQUENTIAL_TRANSACTION_DELAY_MS', 10);
 
+if (!Number.isNaN(Number(process.env.AUTO_DOWN_FREQUENCY_SECONDS))) {
+  Logger.info(`Setting auto kill in ${process.env.AUTO_DOWN_FREQUENCY_SECONDS} seconds...`);
+  setTimeout(() => {
+    Logger.info('Killing bot now!');
+    process.exit(0);
+  }, Number(process.env.AUTO_DOWN_FREQUENCY_SECONDS) * 1000);
+}
+
 async function start() {
   const priceStore = new PriceStore();
   const accountStore = new AccountStore(priceStore);
