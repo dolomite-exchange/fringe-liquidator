@@ -3,7 +3,7 @@ import { BaseContract, ContractTransaction } from 'ethers';
 import { ApiAccount } from '../lib/api-types';
 import { ChainId } from '../lib/chain-id';
 import Logger from '../lib/logger';
-import { RinkebyLiquidator, RinkebyLiquidator__factory } from '../types';
+import { IFringeLiquidator, IFringeLiquidator__factory } from '../types';
 import { getGasPriceWei, getGasPriceWeiForEip1559 } from './gas-price-helpers';
 import { signer } from './web3';
 
@@ -65,9 +65,9 @@ async function liquidateAccountInternal(
 
   const liquidationContract = new BaseContract(
     process.env.FRINGE_LIQUIDATOR_ADDRESS as string,
-    RinkebyLiquidator__factory.createInterface(),
+    IFringeLiquidator__factory.createInterface(),
     signer(),
-  ) as RinkebyLiquidator;
+  ) as IFringeLiquidator;
 
   const flashLoanAddress = getFlashLoanAddress(liquidAccount);
 

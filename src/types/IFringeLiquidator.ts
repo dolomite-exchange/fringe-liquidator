@@ -17,8 +17,8 @@ import { FunctionFragment, Result } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface RinkebyLiquidatorInterface extends utils.Interface {
-  contractName: "RinkebyLiquidator";
+export interface IFringeLiquidatorInterface extends utils.Interface {
+  contractName: "IFringeLiquidator";
   functions: {
     "liquidate(address,address,address,address)": FunctionFragment;
     "primaryTokenIndex()": FunctionFragment;
@@ -69,13 +69,13 @@ export interface RinkebyLiquidatorInterface extends utils.Interface {
   events: {};
 }
 
-export interface RinkebyLiquidator extends BaseContract {
-  contractName: "RinkebyLiquidator";
+export interface IFringeLiquidator extends BaseContract {
+  contractName: "IFringeLiquidator";
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: RinkebyLiquidatorInterface;
+  interface: IFringeLiquidatorInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

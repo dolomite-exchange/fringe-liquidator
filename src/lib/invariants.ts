@@ -1,5 +1,7 @@
 import BigNumber from 'bignumber.js';
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 export function checkDuration(key: string, minValue: number, isMillis: boolean = true) {
   if (Number.isNaN(Number(process.env[key])) || Number(process.env[key]) < minValue) {
     throw new Error(`${key} is invalid. Must be >= ${minValue} ${isMillis ? 'milliseconds' : 'seconds'}`);
@@ -7,13 +9,17 @@ export function checkDuration(key: string, minValue: number, isMillis: boolean =
 }
 
 export function checkEthereumAddress(key: string) {
-  if (!process.env[key] || !process.env[key]?.match(/^0x[a-fA-F0-9]{40}$/)) {
+  if (
+    !process.env[key]
+    || !process.env[key]?.match(/^0x[a-fA-F\d]{40}$/)
+    || process.env[key] === ZERO_ADDRESS
+  ) {
     throw new Error(`${key} is not provided or invalid`);
   }
 }
 
 export function checkPrivateKey(key: string) {
-  if (!process.env[key] || !process.env[key]!.match(/^0x[a-fA-F0-9]{64}$/)) {
+  if (!process.env[key] || !process.env[key]!.match(/^0x[a-fA-F\d]{64}$/)) {
     throw new Error(`${key} is not provided or invalid`);
   }
 }

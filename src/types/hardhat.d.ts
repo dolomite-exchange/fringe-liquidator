@@ -39,7 +39,7 @@ declare module "hardhat/types/runtime" {
     getContractFactory(
       name: "RinkebyLiquidator",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.RinkebyLiquidator__factory>;
+    ): Promise<Contracts.IFringeLiquidator__factory>;
 
     getContractAt(
       name: "IERC20",
@@ -75,7 +75,7 @@ declare module "hardhat/types/runtime" {
       name: "RinkebyLiquidator",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.RinkebyLiquidator>;
+    ): Promise<Contracts.IFringeLiquidator>;
 
     // default types
     getContractFactory(
