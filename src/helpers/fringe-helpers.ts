@@ -108,7 +108,7 @@ async function liquidateAccountInternal(
       liquidAccount.lendingTokenAddress,
       flashLoanAddress,
       {
-        gasLimit,
+        gasLimit: gasLimit.mul('120').div('100'),
         ...gasPriceData,
       },
     );
