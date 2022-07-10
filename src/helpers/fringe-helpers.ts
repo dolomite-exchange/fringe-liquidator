@@ -123,6 +123,8 @@ function getFlashLoanAddress(liquidAccount: ApiAccount): string {
   const collateralTokenAddress = liquidAccount.collateralTokenAddress.toLowerCase()
   const lendingTokenAddress = liquidAccount.lendingTokenAddress.toLowerCase()
 
+  // Uniswap pools don't allow re-entrance, so we need to make sure that the pool we use for a flash loan is DIFFERENT
+  // from the pool we use for swapping the tokens to perform the liquidation
   if (networkId === ChainId.Ethereum) {
     const ethAddress = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'.toLowerCase();
     const usdcAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'.toLowerCase();
